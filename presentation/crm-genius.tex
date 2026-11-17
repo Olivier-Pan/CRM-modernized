@@ -1,0 +1,452 @@
+% ============================================================
+%  CRM Genius — Presentation de prise en main pour l'equipe
+%  Compilation :  tectonic -X compile crm-genius.tex
+% ============================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usetheme{metropolis}
+\metroset{progressbar=frametitle, sectionpage=progressbar, numbering=fraction, block=fill}
+
+\usepackage[french]{babel}
+\usepackage{fontspec}
+\usepackage{tikz}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{amssymb}
+\usetikzlibrary{positioning, arrows.meta}
+
+\setsansfont{Helvetica Neue}
+
+% ---- Domaine : a modifier une seule fois ici -----------------
+\newcommand{\domaine}{votre-domaine.fr}
+
+% ---- Palette : reprise des couleurs de l'application ---------
+\definecolor{noirApp}{HTML}{0A0A0A}
+\definecolor{grisTexte}{HTML}{5C5F66}
+\definecolor{grisClair}{HTML}{F2F2EF}
+\definecolor{bord}{HTML}{E2E2DD}
+
+\definecolor{stAContacter}{HTML}{6B7280}
+\definecolor{stContacte}{HTML}{3B82F6}
+\definecolor{stDiscussion}{HTML}{F59E0B}
+\definecolor{stRelancer}{HTML}{F97316}
+\definecolor{stVerbal}{HTML}{8B5CF6}
+\definecolor{stSigne}{HTML}{22C55E}
+\definecolor{stRefuse}{HTML}{EF4444}
+\definecolor{stSansReponse}{HTML}{9CA3AF}
+
+\setbeamercolor{normal text}{fg=noirApp, bg=white}
+\setbeamercolor{alerted text}{fg=stRefuse}
+\setbeamercolor{example text}{fg=stSigne}
+\setbeamercolor{frametitle}{bg=noirApp, fg=white}
+\setbeamercolor{progress bar}{fg=stSigne, bg=bord}
+\setbeamercolor{block title}{bg=grisClair, fg=noirApp}
+\setbeamercolor{block body}{bg=grisClair!60, fg=noirApp}
+
+% ---- Petits helpers -----------------------------------------
+\newcommand{\pastille}[2]{\tikz[baseline=-0.5ex]\node[circle, fill=#1, inner sep=2.6pt]{};~#2}
+\newcommand{\oui}{\textcolor{stSigne}{\checkmark}}
+\newcommand{\non}{\textcolor{stRefuse}{$\times$}}
+\newcommand{\cle}[1]{\textbf{\textcolor{noirApp}{#1}}}
+\newcommand{\lien}[1]{\texttt{\footnotesize #1}}
+
+\title{CRM Genius}
+\subtitle{Prise en main --- Novatech 2026}
+\author{Maxandre Goillot}
+\institute{Genius CentraleSupélec}
+\date{Septembre 2026}
+
+\begin{document}
+
+\maketitle
+
+% =============================================================
+\section{Le contexte}
+
+\begin{frame}{Pourquoi cet outil}
+  \begin{itemize}
+    \item \cle{On se marchait dessus.} Deux personnes qui appellent la même
+          entreprise la même semaine, ça fait mauvais genre.
+    \item \cle{L'information se perdait.} Les relances et les comptes-rendus
+          d'appel vivaient dans des messages privés et dans des têtes.
+    \item \cle{On re-tapait tout à la main.} Nom des intervenants, taille du
+          stand, texte de présentation : récupérés par mail, puis recopiés.
+  \end{itemize}
+
+  \vfill
+  \begin{block}{À retenir}
+    Le CRM, c'est la mémoire partagée de la prospection.
+    \textbf{Si ce n'est pas dans le CRM, ça n'existe pas.}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Trois sites, trois publics}
+  \begin{block}{CRM \quad\normalfont\lien{crm.\domaine}}
+    \textbf{Nous, les membres Genius.} Prospecter, suivre, prendre des notes.
+  \end{block}
+
+  \begin{block}{Inscription \quad\normalfont\lien{inscription.\domaine}}
+    \textbf{Les entreprises.} Elles remplissent leur fiche elles-mêmes.
+  \end{block}
+
+  \begin{block}{Admin \quad\normalfont\lien{admin.\domaine}}
+    \textbf{Olivier.} Comptes membres, mots de passe, éditions.
+  \end{block}
+
+  \vfill
+  \centering\small
+  Les trois tapent dans la \cle{même base}. Ce qu'une entreprise remplit
+  apparaît immédiatement dans le CRM.
+\end{frame}
+
+% =============================================================
+\section{Comprendre le CRM}
+
+\begin{frame}{Le vocabulaire}
+  \small
+  \begin{description}
+    \item[Édition] Un forum, une année. \emph{Novatech 2026.} Garde
+          l'historique des années précédentes.
+    \item[Entreprise] Un prospect. Elle a \cle{un statut global} : où en est le
+          deal, pour Genius.
+    \item[Shark] \cle{Le lien entre un membre et une entreprise.} « Je prends
+          ce shark » = je me déclare responsable de cette boîte. Le shark porte
+          \emph{mes} notes, \emph{ma} date de contact, \emph{mon} statut perso.
+    \item[Statut] L'étape dans le pipeline.
+  \end{description}
+
+  \vfill
+  \begin{alertblock}{Le piège numéro 1}
+    Il y a \textbf{deux statuts} : celui de l'\textbf{entreprise} (officiel,
+    compté par le dashboard) et celui de \textbf{ton shark} (ton suivi perso).
+    Quand un deal avance vraiment, mets à jour \textbf{celui de l'entreprise}.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Le pipeline}
+  \begin{center}
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[
+      font=\small,
+      etape/.style={rounded corners=2pt, draw=none, text=white, inner sep=6pt,
+                    minimum height=8mm, align=center},
+      fleche/.style={-{Stealth[length=5pt]}, draw=grisTexte, thick}
+    ]
+    \node[etape, fill=stAContacter] (a) at (0,0)    {À contacter};
+    \node[etape, fill=stContacte]   (b) at (3.1,0)  {Contacté};
+    \node[etape, fill=stDiscussion] (c) at (6.2,0)  {En discussion};
+    \node[etape, fill=stVerbal]     (d) at (9.6,0)  {Accord verbal};
+    \node[etape, fill=stSigne]      (e) at (12.6,0) {Signé};
+
+    \draw[fleche] (a) -- (b);
+    \draw[fleche] (b) -- (c);
+    \draw[fleche] (c) -- (d);
+    \draw[fleche] (d) -- (e);
+
+    \node[etape, fill=stRelancer]    (f) at (6.2,-1.8)  {À relancer};
+    \draw[fleche] (c) -- (f);
+    \draw[fleche] (f) -- (d);
+
+    \node[etape, fill=stRefuse]      (g) at (9.6,-1.8)  {Refusé};
+    \node[etape, fill=stSansReponse] (h) at (12.6,-1.8) {Sans réponse};
+  \end{tikzpicture}}
+  \end{center}
+
+  \vspace{0.6em}
+  {\small
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \pastille{stAContacter}{\cle{À contacter} --- personne n'a bougé}\\[2pt]
+      \pastille{stContacte}{\cle{Contacté} --- premier message envoyé}\\[2pt]
+      \pastille{stDiscussion}{\cle{En discussion} --- ça répond, ça échange}\\[2pt]
+      \pastille{stRelancer}{\cle{À relancer} --- silence, il faut revenir}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \pastille{stVerbal}{\cle{Accord verbal} --- oui, pas encore signé}\\[2pt]
+      \pastille{stSigne}{\cle{Signé} --- c'est fait}\\[2pt]
+      \pastille{stRefuse}{\cle{Refusé} --- terminé}\\[2pt]
+      \pastille{stSansReponse}{\cle{Sans réponse} --- terminé}
+    \end{column}
+  \end{columns}}
+
+  \vfill
+  \centering\small
+  \cle{Objectif du dashboard : 20 entreprises} (Signé + Accord verbal).
+\end{frame}
+
+% =============================================================
+\section{Au quotidien}
+
+\begin{frame}{Ta journée type}
+  \begin{enumerate}
+    \item \cle{Je me connecte} au CRM avec mon email et mon mot de passe.
+    \item \cle{« Toutes les entreprises »}, je filtre sur \emph{À contacter}.
+    \item J'ouvre la fiche d'une boîte qui m'intéresse, je clique
+          \cle{« Je prends ce shark »}.
+    \item Je contacte par mail ou LinkedIn, et \cle{je reviens tout de suite}
+          renseigner méthode, date et note.
+    \item À chaque échange : \cle{je mets à jour la note et le statut.}
+  \end{enumerate}
+
+  \vfill
+  \begin{block}{La règle}
+    Tu contactes, tu notes. Dans la minute --- pas « ce soir ».
+  \end{block}
+\end{frame}
+
+\begin{frame}{Le Dashboard}
+  Ce que tu vois en arrivant :
+
+  \begin{itemize}
+    \item \cle{Les compteurs} --- entreprises au total, signées, accords
+          verbaux, en discussion, contactées
+    \item \cle{La barre de progression} vers l'objectif de 20
+    \item \cle{Le classement des membres} --- qui a pris combien de sharks, et
+          combien ont signé
+    \item \cle{Les dernières mises à jour}
+  \end{itemize}
+
+  \vfill
+  \begin{block}{Usage}
+    Sers-t'en en réunion hebdomadaire : c'est le point d'avancement, sans avoir
+    à faire un tour de table.
+  \end{block}
+\end{frame}
+
+\begin{frame}{La fiche entreprise}
+  Tout se passe ici. Trois zones :
+
+  \begin{itemize}
+    \item \cle{En haut} --- le nom et le \emph{statut global}
+    \item \cle{Au milieu} --- contact : nom, email, LinkedIn, site web
+    \item \cle{En bas} --- la section \emph{Sharks} : qui est dessus, avec
+          quelles notes
+  \end{itemize}
+
+  \vfill
+  \begin{alertblock}{Attention}
+    Plusieurs membres peuvent être shark sur la même entreprise :
+    \textbf{l'outil ne bloque pas}. Regarde qui est déjà dessus, et si quelqu'un
+    y est, parle-lui d'abord.
+  \end{alertblock}
+
+  \vspace{0.2em}
+  {\small Pour lâcher une boîte : \textbf{« Se désassigner »}.}
+\end{frame}
+
+% =============================================================
+\section{Les entreprises}
+
+\begin{frame}{Créer une entreprise et son accès}
+  Quand tu crées une entreprise, le CRM \cle{génère automatiquement un mot de
+  passe de 12 caractères}.
+
+  \vspace{0.4em}
+  \cle{Où le retrouver} : \emph{Admin} $\rightarrow$ \emph{Entreprises}
+  $\rightarrow$ colonne \emph{Mot de passe}, clic pour révéler.
+
+  \vspace{0.6em}
+  \cle{Deux identifiants possibles :}
+  \begin{itemize}
+    \item l'identifiant technique (long, illisible), \textbf{ou}
+    \item \cle{tout simplement le nom de l'entreprise}, tel qu'écrit dans le
+          CRM --- majuscules et minuscules sans importance.
+  \end{itemize}
+
+  \vfill
+  \begin{block}{Conseil}
+    Utilise le nom. Toujours. « Identifiant : Capgemini » passe mieux qu'une
+    suite de 36 caractères.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Envoyer les identifiants}
+  \begin{block}{Modèle d'email --- à adapter}
+    \footnotesize
+    \textbf{Objet : Novatech 2026 --- votre espace exposant}
+
+    \smallskip
+    Bonjour [Prénom],
+
+    Ravi de vous compter parmi nous pour Novatech 2026 !
+
+    Pour finaliser votre participation, merci de compléter votre fiche exposant
+    ici : \lien{inscription.\domaine}
+
+    \smallskip
+    \hspace{1em}\textbf{Identifiant :} [Nom de l'entreprise]\\
+    \hspace{1em}\textbf{Mot de passe :} [mot de passe]
+
+    \smallskip
+    Comptez 10 minutes. Vous pourrez y revenir et modifier vos réponses autant
+    de fois que nécessaire jusqu'au [date limite].
+
+    \smallskip
+    Je reste votre contact pour toute question.\\
+    {}[Ton prénom] --- Genius CentraleSupélec
+  \end{block}
+\end{frame}
+
+\begin{frame}{Envoyer les identifiants --- les trois consignes}
+  \begin{enumerate}
+    \item \cle{Envoie depuis ton mail}, pas une adresse générique : tu es leur
+          interlocuteur, et ils doivent pouvoir te répondre directement.
+    \item \cle{Mets une date limite.} Sans échéance, personne ne remplit.
+    \item \cle{Note dans le CRM que tu as envoyé les accès}, dans les notes de
+          ton shark. Sinon personne ne sait où en est cette entreprise.
+  \end{enumerate}
+
+  \vfill
+  \begin{alertblock}{Sécurité}
+    Le mot de passe part par mail à l'entreprise, jamais dans un canal public
+    ou un groupe de discussion.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Ce que l'entreprise remplit}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item \cle{Identité} --- nom, site web, secteur, taille, logo,
+              description
+        \item \cle{Contact} --- nom, email, téléphone
+        \item \cle{Stand} --- taille S, M, L ou XL
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item \cle{Participation} --- conférence, workshop, zone de pitch
+        \item \cle{Offres} --- stages, alternances, CDI
+        \item \cle{Représentants} --- autant de personnes que voulu
+        \item \cle{Besoins particuliers}
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vfill
+  \begin{block}{}
+    Elle peut revenir et modifier à volonté.
+    \textbf{Tu vois ses réponses dans le CRM dès qu'elle enregistre.}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Quand une entreprise est bloquée}
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.34\textwidth} >{\raggedright\arraybackslash}X@{}}
+    \toprule
+    \textbf{Elle dit\ldots} & \textbf{Tu fais\ldots} \\
+    \midrule
+    « Mauvais mot de passe »
+      & Vérifie dans l'Admin. Attention aux espaces copiés-collés en trop. \\
+    « Quel identifiant ? »
+      & Le \textbf{nom de l'entreprise}, exactement comme dans le CRM. \\
+    « J'ai perdu le mot de passe »
+      & Relis-le dans l'Admin et renvoie-le. Rien à réinitialiser. \\
+    « Je n'ai pas le temps »
+      & Propose de remplir avec elle au téléphone. \\
+    Rien rempli après 5 jours
+      & Relance, et passe ton shark en \textbf{À relancer}. \\
+    \bottomrule
+  \end{tabularx}
+
+  \vfill
+  \centering
+  Tu es leur unique interlocuteur. Une entreprise ne devrait jamais avoir à
+  chercher qui contacter.
+\end{frame}
+
+% =============================================================
+\section{Les règles}
+
+\begin{frame}{Les règles d'or}
+  \footnotesize
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{\oui~À faire}
+        \begin{itemize}
+          \item Noter \textbf{dès} le contact, pas le soir
+          \item Regarder qui est déjà shark \textbf{avant} de prendre une boîte
+          \item Mettre à jour le \textbf{statut de l'entreprise} quand le deal
+                avance vraiment
+          \item Écrire des notes utiles au suivant : « Rappeler après le 15/10,
+                budget voté en CA » --- pas « ok »
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{\non~À ne pas faire}
+        \begin{itemize}
+          \item \textbf{Ajouter ou supprimer des lignes à la main dans le
+                Google Sheet.} L'appli repère chaque entreprise par sa position
+                dans le tableau : supprimer une ligne décale tout ce qui suit,
+                et l'appli écrit ensuite sur la mauvaise boîte.
+          \item Envoyer les mots de passe dans un canal public
+          \item Laisser une entreprise « En discussion » trois semaines sans note
+        \end{itemize}
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+
+  \vfill
+  {\scriptsize \cle{Deux détails} : l'affichage se rafraîchit toutes les
+  \textbf{30 secondes}. Et ta session dure \textbf{24 heures} : reconnexion
+  chaque jour.}
+\end{frame}
+
+\begin{frame}{Et maintenant}
+  \begin{itemize}
+    \item Vos comptes sont créés --- demandez vos accès à \cle{Olivier}
+    \item Objectif : \cle{20 entreprises} signées ou en accord verbal
+    \item Point d'avancement chaque semaine, sur le Dashboard
+    \item Un bug, une question : \cle{[ton prénom]}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[standout]
+  Questions ?
+\end{frame}
+
+% =============================================================
+\appendix
+
+\begin{frame}{Annexe --- script de démo (5 minutes)}
+  \footnotesize
+  \begin{enumerate}
+    \item Connexion au CRM $\rightarrow$ \textbf{Dashboard} : compteurs et
+          classement
+    \item \textbf{Toutes les entreprises} $\rightarrow$ filtre « À contacter »
+    \item Ouvrir une fiche $\rightarrow$ \textbf{« Je prends ce shark »}
+    \item Ajouter une note et une date de contact $\rightarrow$ Sauvegarder
+    \item Passer le statut de l'entreprise en \textbf{Contacté}
+    \item Retour \textbf{Dashboard} : le compteur a bougé
+    \item Bascule sur \textbf{Admin} : révéler le mot de passe d'une entreprise
+    \item Bascule sur \textbf{Inscription} : se connecter avec ce mot de passe,
+          montrer le formulaire côté entreprise
+    \item Enregistrer, puis retour CRM : l'information est là
+  \end{enumerate}
+
+  \vfill
+  \begin{block}{}
+    Le point 9 est le moment « ah, d'accord » de la présentation. Ne le saute pas.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Annexe --- à préparer avant de présenter}
+  \small
+  \begin{itemize}
+    \item Une \cle{entreprise de démo} (« Entreprise Test ») avec son mot de
+          passe sous la main --- ne fais pas la démo sur un vrai prospect
+    \item \cle{Trois onglets déjà ouverts et connectés} : CRM, Admin,
+          Inscription. Se connecter en direct devant vingt personnes, c'est là
+          que ça casse
+    \item Les \cle{vraies URL} des trois sites : remplacer \texttt{\domaine}
+          dans le fichier source (commande \texttt{$\backslash$domaine})
+    \item La \cle{date limite} annoncée pour le remplissage des fiches
+    \item Vérifier que le dashboard \cle{n'est pas à zéro} : créer trois ou
+          quatre entreprises fictives avec des statuts variés, sinon les
+          compteurs et la barre de progression ne racontent rien
+  \end{itemize}
+\end{frame}
+
+\end{document}

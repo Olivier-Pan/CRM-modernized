@@ -1,0 +1,62 @@
+networks:
+  app-net:
+    driver: bridge
+
+services:
+
+  # ── Backend API (Rust + Axum) ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - GOOGLE_SHEETS_ID=${GOOGLE_SHEETS_ID}
+      - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=3001
+      - RUST_LOG=${RUST_LOG:-info}
+    # Port non exposé publiquement — les frontends y accèdent via le réseau interne Docker
+    expose:
+      - "3001"
+    networks:
+      - app-net
+
+  # ── CRM membres Genius ────────────────────────────────────────────────────
+  crm:
+    build:
+      context: ./frontend-crm
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"   # dev local uniquement — en prod, Dokploy/Traefik gère le routing
+    networks:
+      - app-net
+
+  # ── Portail inscription entreprises ──────────────────────────────────────
+  registration:
+    build:
+      context: ./frontend-registration
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5174:80"
+    networks:
+      - app-net
+
+  # ── Admin (Olivier) ───────────────────────────────────────────────────────
+  admin:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5175:80"
+    networks:
+      - app-net

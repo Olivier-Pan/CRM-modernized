@@ -1,0 +1,94 @@
+# Mémoires de session Claude (local uniquement)
+memories/
+
+# Rust
+target/
+**/*.rs.bk
+*.pdb
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.next/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+
+
+
+
+
+
+
+
+# Secrets et clés — ne jamais commiter
+.env
+.env.*
+config/.env
+config/.env_backup
+*.pem
+*.key
+secrets.json
+
+# Base de données locale
+*.sqlite3
+db.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+*.pot
+
+# Environnement virtuel
+venv/
+env/
+.venv/
+
+# Django
+media/
+staticfiles/
+
+# OS
+.DS_Store
+
+# Divers
+migration_FULL.csv
+migration.py
+code_export.txt
+
+# Documentation interne (ne pas publier)
+AUDIT_SECURITE.md
+GUIDE_DEV.md
+JOURNAL_DEV.md
+BACKLOG_AMELIORATIONS.md
+SECURITE_ET_PRODUCTION.md
+
+# Cle du service account Google — ne JAMAIS commiter (push sur main = deploiement)
+sa.json
+sa-key.json
+service-account*.json
+*service-account*.json
+gcp-*.json
+backup-sheets-*/
+*.zip
+target/
+node_modules/
+*.zip
+target/
+node_modules/
+.env
+.DS_Store
