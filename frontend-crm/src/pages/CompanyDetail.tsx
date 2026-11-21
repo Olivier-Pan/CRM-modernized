@@ -5,6 +5,7 @@ import { listCompanyContacts, createContact, updateContact, deleteContact } from
 import { listSharks, assignShark, deleteShark } from '../api/sharks';
 import { listFollowUps, createFollowUp, deleteFollowUp, updateFollowUp, FollowUp } from '../api/follow_ups';
 import { getMe } from '../api/auth';
+import { deleteCompany } from '../api/companies';
 import { listMembers } from '../api/members';
 import { listEditions } from '../api/editions';
 import { ApiError } from '../api/client';
@@ -46,8 +47,10 @@ export default function CompanyDetail() {
    name: '', logo_url: '', sector: '', size: '', website: '', description: '',
    legal_name: '', novatech_offer: '' as '' | 'oui' | 'non', forum_contract_date: '',
  });
- const [savingInfo, setSavingInfo] = useState(false);
 
+ const [savingInfo, setSavingInfo] = useState(false);
+const [deletingCompany, setDeletingCompany] = useState(false);
+ 
  // --- GESTION CONTACTS ---
  const [showAddContact, setShowAddContact] = useState(false);
  const [newContact, setNewContact] = useState({
@@ -158,6 +161,21 @@ export default function CompanyDetail() {
      setSavingInfo(false);
    }
  }
+
+ async function handleDeleteCompany() {
+  if (!id || !company) return;
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer définitivement « ${company.name} » ainsi que tous ses contacts et relances ?`)) {
+    return;
+  }
+  setDeletingCompany(true);
+  try {
+    await deleteCompany(id);
+    navigate('/companies', { replace: true });
+  } catch (err) {
+    alert(err instanceof Error ? err.message : "Erreur lors de la suppression de l'entreprise");
+    setDeletingCompany(false);
+  }
+}
 
  async function handleAddContact(e: React.FormEvent) {
    e.preventDefault();
@@ -391,8 +409,24 @@ export default function CompanyDetail() {
                      {company.sector && <span style={tagStyle(theme)}>{company.sector}</span>}
                    </div>
                  </div>
-                 <button onClick={startEditInfo} style={btnSecondaryStyle(t)}>Modifier la fiche</button>
-               </div>
+                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button onClick={startEditInfo} style={btnSecondaryStyle(t)}>Modifier la fiche</button>
+                  <button
+                    onClick={handleDeleteCompany}
+                    disabled={deletingCompany}
+                    style={{
+                      ...btnSecondaryStyle(t),
+                      color: '#ef4444',
+                      borderColor: 'rgba(239, 68, 68, 0.35)',
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      opacity: deletingCompany ? 0.6 : 1,
+                      cursor: deletingCompany ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {deletingCompany ? 'Suppression…' : 'Supprimer'}
+                  </button>
+                </div>
+              </div>
                <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
                  {company.website && <InfoField label="Site Web" value={<a href={externalHref(company.website)} target="_blank" rel="noreferrer" style={{ color: t.primary, textDecoration: 'none', fontWeight: 600 }}>{company.website} ↗</a>} t={t} />}
                  {company.size && <InfoField label="Taille" value={company.size} t={t} />}

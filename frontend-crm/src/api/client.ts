@@ -70,7 +70,12 @@ export async function apiFetch<T>(
         errorMessage = await response.text();
       }
       throw new Error(errorMessage || 'Erreur inconnue');
-    }
+   }
 
-  return response.json() as Promise<T>;
+ if (response.status === 204 || response.headers.get('content-length') === '0') {
+   return undefined as T;
+ }
+
+ const text = await response.text();
+ return (text ? JSON.parse(text) : undefined) as T;
 }

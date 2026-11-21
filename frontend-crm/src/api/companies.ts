@@ -42,6 +42,12 @@ export async function updateCompany(
   });
 }
 
+export async function deleteCompany(id: string): Promise<void> {
+  return apiFetch<void>(`/companies/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 /** Remplace la remarque interne (`''` l'efface). `expected` = le texte de
  *  départ de l'éditeur : si quelqu'un l'a changé entre-temps, le backend répond
  *  409 avec `current_internal_remark` au lieu d'écraser sa version. */
@@ -72,3 +78,4 @@ export async function regenerateCompanyPassword(
     method: 'POST',
   });
 }
+
