@@ -82,40 +82,104 @@ pub async fn create_contact(
     Ok((StatusCode::CREATED, Json(new_contact)))
 }
 
-// Ajoute cette structure sous tes autres structures (vers la ligne 20)
 #[derive(Deserialize)]
 pub struct UpdateContactPayload {
-    pub is_primary: Option<bool>,
+   pub contact_type: Option<String>,
+   pub first_name: Option<String>,
+   pub last_name: Option<String>,
+   pub email: Option<String>,
+   pub phone: Option<String>,
+   pub linkedin_url: Option<String>,
+   pub is_primary: Option<bool>,
 }
-
-// Ajoute ces deux fonctions TOUT EN BAS du fichier contacts.rs
 
 /// PUT /api/contacts/:id
-/// Met à jour un contact (ex: le définir comme principal)
+/// Met à jour les informations d'un contact existant
 pub async fn update_contact(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<String>,
-    Json(payload): Json<UpdateContactPayload>,
+   State(state): State<Arc<AppState>>,
+   Path(id): Path<String>,
+   Json(payload): Json<UpdateContactPayload>,
 ) -> Result<Json<Contact>, (StatusCode, String)> {
-    if let Some(true) = payload.is_primary {
-        // Optionnel mais recommandé : on passe d'abord tous les autres contacts de cette entreprise à false
-        let contact = sqlx::query_as::<_, Contact>("SELECT * FROM contacts WHERE id = ?")
-            .bind(&id).fetch_one(&state.db).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-            
-        sqlx::query("UPDATE contacts SET is_primary = false WHERE company_id = ?")
-            .bind(&contact.company_id).execute(&state.db).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-            
-        // Puis on passe celui-ci à true
-        sqlx::query("UPDATE contacts SET is_primary = true WHERE id = ?")
-            .bind(&id).execute(&state.db).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    }
+   let contact = sqlx::query_as::<_, Contact>("SELECT * FROM contacts WHERE id = ?")
+       .bind(&id)
+       .fetch_optional(&state.db)
+       .await
+       .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+       .ok_or((StatusCode::NOT_FOUND, "Contact introuvable".to_string()))?;
 
-    let updated = sqlx::query_as::<_, Contact>("SELECT * FROM contacts WHERE id = ?")
-        .bind(&id).fetch_one(&state.db).await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-        
-    Ok(Json(updated))
+   if let Some(true) = payload.is_primary {
+       sqlx::query("UPDATE contacts SET is_primary = false WHERE company_id = ?")
+           .bind(&contact.company_id)
+           .execute(&state.db)
+           .await
+           .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+       sqlx::query("UPDATE contacts SET is_primary = true WHERE id = ?")
+           .bind(&id)
+           .execute(&state.db)
+           .await
+           .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+   }
+
+   let has_field_updates = payload.contact_type.is_some()
+       || payload.first_name.is_some()
+       || payload.last_name.is_some()
+       || payload.email.is_some()
+       || payload.phone.is_some()
+       || payload.linkedin_url.is_some();
+
+   if has_field_updates {
+       let mut query = sqlx::QueryBuilder::new("UPDATE contacts SET ");
+       let mut sep = query.separated(", ");
+
+       if let Some(v) = &payload.contact_type {
+           sep.push("contact_type = ");
+           sep.push_bind_unseparated(v);
+       }
+       if let Some(v) = &payload.first_name {
+           let val = if v.trim().is_empty() { None } else { Some(v.trim()) };
+           sep.push("first_name = ");
+           sep.push_bind_unseparated(val);
+       }
+       if let Some(v) = &payload.last_name {
+           let val = if v.trim().is_empty() { None } else { Some(v.trim()) };
+           sep.push("last_name = ");
+           sep.push_bind_unseparated(val);
+       }
+       if let Some(v) = &payload.email {
+           let val = if v.trim().is_empty() { None } else { Some(v.trim()) };
+           sep.push("email = ");
+           sep.push_bind_unseparated(val);
+       }
+       if let Some(v) = &payload.phone {
+           let val = if v.trim().is_empty() { None } else { Some(v.trim()) };
+           sep.push("phone = ");
+           sep.push_bind_unseparated(val);
+       }
+       if let Some(v) = &payload.linkedin_url {
+           let val = if v.trim().is_empty() { None } else { Some(v.trim()) };
+           sep.push("linkedin_url = ");
+           sep.push_bind_unseparated(val);
+       }
+
+       query.push(" WHERE id = ");
+       query.push_bind(&id);
+
+       query
+           .build()
+           .execute(&state.db)
+           .await
+           .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+   }
+
+   let updated = sqlx::query_as::<_, Contact>("SELECT * FROM contacts WHERE id = ?")
+       .bind(&id)
+       .fetch_one(&state.db)
+       .await
+       .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+   Ok(Json(updated))
 }
-
 /// DELETE /api/contacts/:id
 /// Supprime définitivement un contact
 pub async fn delete_contact(

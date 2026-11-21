@@ -60,12 +60,22 @@ const [confirmDialog, setConfirmDialog] = useState<{
 const [confirmLoading, setConfirmLoading] = useState(false);
 const [deletingCompany, setDeletingCompany] = useState(false);
  
- // --- GESTION CONTACTS ---
- const [showAddContact, setShowAddContact] = useState(false);
- const [newContact, setNewContact] = useState({
-   contact_type: 'person' as ContactType, first_name: '', last_name: '', email: '', phone: '', linkedin_url: '', is_primary: false
- });
- const [savingContact, setSavingContact] = useState(false);
+// --- GESTION CONTACTS ---
+const [showAddContact, setShowAddContact] = useState(false);
+const [newContact, setNewContact] = useState({
+  contact_type: 'person' as ContactType, first_name: '', last_name: '', email: '', phone: '', linkedin_url: '', is_primary: false
+});
+const [savingContact, setSavingContact] = useState(false);
+const [editingContactId, setEditingContactId] = useState<string | null>(null);
+const [editContactForm, setEditContactForm] = useState({
+  contact_type: 'person' as ContactType,
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  linkedin_url: '',
+});
+const [savingEditContact, setSavingEditContact] = useState(false);
 
  // --- GESTION RELANCES (FOLLOW-UPS) ---
  const [editingFollowUpsId, setEditingFollowUpsId] = useState<string | null>(null);
@@ -213,15 +223,48 @@ function handleDeleteContact(contactId: string) {
   });
 }
 
- async function handleSetPrimaryContact(contactId: string) {
-   try {
-     await updateContact(contactId, { is_primary: true });
-     const updatedContacts = await listCompanyContacts(id!);
-     setContacts(updatedContacts);
-   } catch (err) {
-     alert("Erreur lors de la mise à jour du contact principal.");
-   }
- }
+async function handleSetPrimaryContact(contactId: string) {
+  try {
+    await updateContact(contactId, { is_primary: true });
+    const updatedContacts = await listCompanyContacts(id!);
+    setContacts(updatedContacts);
+  } catch (err) {
+    alert("Erreur lors de la mise à jour du contact principal.");
+  }
+}
+
+function startEditContact(contact: Contact) {
+  setEditingContactId(contact.id);
+  setEditContactForm({
+    contact_type: contact.contact_type,
+    first_name: contact.first_name || '',
+    last_name: contact.last_name || '',
+    email: contact.email || '',
+    phone: contact.phone || '',
+    linkedin_url: contact.linkedin_url || '',
+  });
+}
+
+async function handleSaveEditContact(e: React.FormEvent, contactId: string) {
+  e.preventDefault();
+  setSavingEditContact(true);
+  try {
+    const updated = await updateContact(contactId, {
+      contact_type: editContactForm.contact_type,
+      first_name: editContactForm.contact_type === 'person' ? editContactForm.first_name : '',
+      last_name: editContactForm.contact_type === 'person' ? editContactForm.last_name : '',
+      email: editContactForm.email,
+      phone: editContactForm.phone,
+      linkedin_url: editContactForm.linkedin_url,
+    });
+    setContacts((prev) => prev.map((c) => (c.id === contactId ? updated : c)));
+    setEditingContactId(null);
+  } catch (err) {
+    alert(err instanceof Error ? err.message : 'Erreur lors de la modification du contact');
+  } finally {
+    setSavingEditContact(false);
+  }
+}
 
  async function handleAssignShark(contactId: string, targetMemberId: string) {
    if (!id) return;
@@ -534,11 +577,95 @@ function handleDeleteFollowUp(fupId: string) {
                       Définir principal
                     </button>
                   )}
+                  {editingContactId !== contact.id && (
+                    <button onClick={() => startEditContact(contact)} style={{ background: 'none', border: 'none', color: t.primary, fontSize: 12, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+                      Modifier
+                    </button>
+                  )}
                   <button onClick={() => handleDeleteContact(contact.id)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}>
                     Supprimer
                   </button>
                 </div>
-               </div>
+              </div>
+
+              {editingContactId === contact.id && (
+                <div style={{ padding: '20px 24px', background: t.bgMain, borderTop: `1px solid ${t.border}` }}>
+                  <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: t.textTitle }}>
+                    Modifier le contact
+                  </h4>
+                  <form onSubmit={(e) => handleSaveEditContact(e, contact.id)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+                      <label style={labelStyle(t.textMuted)}>
+                        Type de contact *
+                        <select
+                          style={inputStyle(t)}
+                          value={editContactForm.contact_type}
+                          onChange={(e) => setEditContactForm({ ...editContactForm, contact_type: e.target.value as ContactType })}
+                        >
+                          {Object.entries(CONTACT_TYPE_LABELS).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      {editContactForm.contact_type === 'person' && (
+                        <>
+                          <label style={labelStyle(t.textMuted)}>
+                            Prénom
+                            <input
+                              style={inputStyle(t)}
+                              value={editContactForm.first_name}
+                              onChange={(e) => setEditContactForm({ ...editContactForm, first_name: e.target.value })}
+                            />
+                          </label>
+                          <label style={labelStyle(t.textMuted)}>
+                            Nom
+                            <input
+                              style={inputStyle(t)}
+                              value={editContactForm.last_name}
+                              onChange={(e) => setEditContactForm({ ...editContactForm, last_name: e.target.value })}
+                            />
+                          </label>
+                        </>
+                      )}
+                      <label style={labelStyle(t.textMuted)}>
+                        Email
+                        <input
+                          type="email"
+                          style={inputStyle(t)}
+                          value={editContactForm.email}
+                          onChange={(e) => setEditContactForm({ ...editContactForm, email: e.target.value })}
+                        />
+                      </label>
+                      <label style={labelStyle(t.textMuted)}>
+                        Téléphone
+                        <input
+                          type="tel"
+                          style={inputStyle(t)}
+                          value={editContactForm.phone}
+                          onChange={(e) => setEditContactForm({ ...editContactForm, phone: e.target.value })}
+                        />
+                      </label>
+                      <label style={labelStyle(t.textMuted)}>
+                        Lien LinkedIn
+                        <input
+                          type="url"
+                          style={inputStyle(t)}
+                          value={editContactForm.linkedin_url}
+                          onChange={(e) => setEditContactForm({ ...editContactForm, linkedin_url: e.target.value })}
+                        />
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                      <button type="button" onClick={() => setEditingContactId(null)} style={btnSecondaryStyle(t)}>
+                        Annuler
+                      </button>
+                      <button type="submit" disabled={savingEditContact} style={btnPrimaryStyle}>
+                        {savingEditContact ? 'Sauvegarde…' : 'Sauvegarder'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
 
                {/* Section Suivi et Historique des Relances */}
               <div style={{ padding: '20px 24px', background: t.bgCard, borderTop: `1px solid ${t.border}` }}>
