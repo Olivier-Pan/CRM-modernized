@@ -10,9 +10,11 @@ import { listMembers } from '../api/members';
 import { listEditions } from '../api/editions';
 import { ApiError } from '../api/client';
 import ExhibitorAccessCard from '../components/ExhibitorAccessCard';
+import ConfirmModal from '../components/ConfirmModal';
 import { useTheme } from '../hooks/useTheme';
 import type { Company, Shark, SharkStatus, AuthUser, Member, Edition, Contact, ContactType } from '../types';
 import { SHARK_STATUS_LABELS, SHARK_STATUS_COLORS } from '../types';
+
 
 const ALL_STATUSES: SharkStatus[] = [
  'ToContact', 'Contacted', 'InDiscussion', 'VerbalAgreement', 'Signed', 'Refused', 'NoAnswer',
@@ -49,6 +51,13 @@ export default function CompanyDetail() {
  });
 
  const [savingInfo, setSavingInfo] = useState(false);
+const [confirmDialog, setConfirmDialog] = useState<{
+  title: string;
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => Promise<void>;
+} | null>(null);
+const [confirmLoading, setConfirmLoading] = useState(false);
 const [deletingCompany, setDeletingCompany] = useState(false);
  
  // --- GESTION CONTACTS ---
@@ -162,21 +171,18 @@ const [deletingCompany, setDeletingCompany] = useState(false);
    }
  }
 
- async function handleDeleteCompany() {
+function handleDeleteCompany() {
   if (!id || !company) return;
-  if (!confirm(`Êtes-vous sûr de vouloir supprimer définitivement « ${company.name} » ainsi que tous ses contacts et relances ?`)) {
-    return;
-  }
-  setDeletingCompany(true);
-  try {
-    await deleteCompany(id);
-    navigate('/companies', { replace: true });
-  } catch (err) {
-    alert(err instanceof Error ? err.message : "Erreur lors de la suppression de l'entreprise");
-    setDeletingCompany(false);
-  }
+  setConfirmDialog({
+    title: "Supprimer l'entreprise",
+    message: `Êtes-vous sûr de vouloir supprimer définitivement « ${company.name} » ainsi que tous ses contacts et relances ? Cette action est irréversible.`,
+    confirmLabel: 'Supprimer définitivement',
+    onConfirm: async () => {
+      await deleteCompany(id);
+      navigate('/companies', { replace: true });
+    },
+  });
 }
-
  async function handleAddContact(e: React.FormEvent) {
    e.preventDefault();
    if (!id) return;
@@ -194,16 +200,18 @@ const [deletingCompany, setDeletingCompany] = useState(false);
    }
  }
 
- async function handleDeleteContact(contactId: string) {
-   if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement ce contact ?')) return;
-   try {
-     await deleteContact(contactId);
-     setContacts((prev) => prev.filter((c) => c.id !== contactId));
-     setSharks((prev) => prev.filter((s) => s.contact_id !== contactId));
-   } catch (err) {
-     alert(err instanceof Error ? err.message : 'Erreur lors de la suppression');
-   }
- }
+function handleDeleteContact(contactId: string) {
+  setConfirmDialog({
+    title: 'Supprimer le contact',
+    message: 'Êtes-vous sûr de vouloir supprimer définitivement ce contact ?',
+    confirmLabel: 'Supprimer',
+    onConfirm: async () => {
+      await deleteContact(contactId);
+      setContacts((prev) => prev.filter((c) => c.id !== contactId));
+      setSharks((prev) => prev.filter((s) => s.contact_id !== contactId));
+    },
+  });
+}
 
  async function handleSetPrimaryContact(contactId: string) {
    try {
@@ -225,15 +233,17 @@ const [deletingCompany, setDeletingCompany] = useState(false);
    }
  }
 
- async function handleUnassignShark(sharkId: string) {
-   if (!confirm('Se désassigner de ce contact ?')) return;
-   try {
-     await deleteShark(sharkId);
-     setSharks((prev) => prev.filter((s) => s.id !== sharkId));
-   } catch (err) {
-     alert(err instanceof Error ? err.message : 'Erreur');
-   }
- }
+function handleUnassignShark(sharkId: string) {
+  setConfirmDialog({
+    title: 'Se désassigner',
+    message: 'Voulez-vous vraiment vous désassigner de ce contact ?',
+    confirmLabel: 'Se désassigner',
+    onConfirm: async () => {
+      await deleteShark(sharkId);
+      setSharks((prev) => prev.filter((s) => s.id !== sharkId));
+    },
+  });
+}
 
  // --- ACTIONS DE RELANCE DYNAMIQUES ---
  async function handleAddFollowUp(contactId: string, customNote?: string) {
@@ -268,15 +278,18 @@ const [deletingCompany, setDeletingCompany] = useState(false);
    }
  }
 
- async function handleDeleteFollowUp(fupId: string) {
-   if (!id || !confirm('Supprimer cette entrée ?')) return;
-   try {
-     await deleteFollowUp(id, fupId);
-     setFollowUps((prev) => prev.filter(f => f.id !== fupId));
-   } catch (err) {
-     alert(err instanceof Error ? err.message : "Erreur de suppression");
-   }
- }
+function handleDeleteFollowUp(fupId: string) {
+  if (!id) return;
+  setConfirmDialog({
+    title: "Supprimer l'entrée",
+    message: 'Êtes-vous sûr de vouloir supprimer cette entrée de suivi ?',
+    confirmLabel: 'Supprimer',
+    onConfirm: async () => {
+      await deleteFollowUp(id, fupId);
+      setFollowUps((prev) => prev.filter((f) => f.id !== fupId));
+    },
+  });
+}
 
  async function handleCancelStatus(contactId: string, statusType: 'InDiscussion' | 'NoAnswer') {
    if (!id) return;
@@ -413,17 +426,14 @@ const [deletingCompany, setDeletingCompany] = useState(false);
                   <button onClick={startEditInfo} style={btnSecondaryStyle(t)}>Modifier la fiche</button>
                   <button
                     onClick={handleDeleteCompany}
-                    disabled={deletingCompany}
                     style={{
                       ...btnSecondaryStyle(t),
                       color: '#ef4444',
                       borderColor: 'rgba(239, 68, 68, 0.35)',
                       background: 'rgba(239, 68, 68, 0.08)',
-                      opacity: deletingCompany ? 0.6 : 1,
-                      cursor: deletingCompany ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {deletingCompany ? 'Suppression…' : 'Supprimer'}
+                    Supprimer
                   </button>
                 </div>
               </div>
@@ -727,8 +737,28 @@ const [deletingCompany, setDeletingCompany] = useState(false);
          />
        </div>
      )}
-   </div>
- );
+   <ConfirmModal
+      open={confirmDialog !== null}
+      title={confirmDialog?.title ?? ''}
+      message={confirmDialog?.message ?? ''}
+      confirmLabel={confirmDialog?.confirmLabel}
+      loading={confirmLoading}
+      onCancel={() => setConfirmDialog(null)}
+      onConfirm={async () => {
+        if (!confirmDialog) return;
+        setConfirmLoading(true);
+        try {
+          await confirmDialog.onConfirm();
+          setConfirmDialog(null);
+        } catch (err) {
+          alert(err instanceof Error ? err.message : 'Erreur');
+        } finally {
+          setConfirmLoading(false);
+        }
+      }}
+    />
+  </div>
+);
 }
 
 function InfoField({ label, value, t }: { label: string; value: React.ReactNode, t: any }) {
