@@ -18,6 +18,7 @@ import CompanyIdentityCard from '../components/company-detail/CompanyIdentityCar
 import CompanyContactsSection from '../components/company-detail/CompanyContactsSection';
 import InternalRemarkCard from '../components/company-detail/InternalRemarkCard';
 import ExhibitorAccessCard from '../components/ExhibitorAccessCard';
+import { BrochureReadOnlyPanel } from '../components/BrochureReadOnlyPanel';
 import ConfirmModal from '../components/ConfirmModal';
 import type {
   Company,
@@ -208,9 +209,9 @@ export default function CompanyDetail() {
         onCompanyUpdated={setCompany}
       />
 
-      {/* 4. ACCÈS EXPOSANT */}
+      {/* 4. ACCÈS EXPOSANT & FORMULAIRE BROCHURE */}
       {company.global_status === 'Signed' && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <ExhibitorAccessCard
             company={company}
             contactEmail={
@@ -230,6 +231,8 @@ export default function CompanyDetail() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
+
+          <BrochureReadOnlyPanel companyId={company.id} />
         </div>
       )}
 

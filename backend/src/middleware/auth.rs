@@ -33,7 +33,6 @@ impl FromRequestParts<std::sync::Arc<AppState>> for AuthUser {
 }
 
 /// Like `AuthUser` but additionally requires the `Admin` role.
-/// The inner `Claims` are accessible in handlers that need them.
 #[allow(dead_code)]
 pub struct RequireAdmin(pub Claims);
 
@@ -59,8 +58,7 @@ impl FromRequestParts<std::sync::Arc<AppState>> for RequireAdmin {
     }
 }
 
-/// Like `AuthUser` but only for Genius staff (`Admin` or `Member`). A `Company`
-/// token from the exhibitor portal gets 401 before the handler runs.
+/// Like `AuthUser` but only for Genius staff (`Admin` or `Member`).
 pub struct RequireStaff(pub Claims);
 
 #[async_trait]
@@ -78,6 +76,28 @@ impl FromRequestParts<std::sync::Arc<AppState>> for RequireStaff {
         }
 
         Ok(RequireStaff(claims))
+    }
+}
+
+/// Like `AuthUser` but only for exhibitor portal accounts (`role == "Company"`).
+/// `claims.sub` contains the `company_id`.
+pub struct RequireCompany(pub Claims);
+
+#[async_trait]
+impl FromRequestParts<std::sync::Arc<AppState>> for RequireCompany {
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &std::sync::Arc<AppState>,
+    ) -> Result<Self, Self::Rejection> {
+        let AuthUser(claims) = AuthUser::from_request_parts(parts, state).await?;
+
+        if claims.role != "Company" {
+            return Err(AppError::Unauthorized);
+        }
+
+        Ok(RequireCompany(claims))
     }
 }
 
