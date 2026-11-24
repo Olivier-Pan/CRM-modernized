@@ -628,10 +628,16 @@ export const BrochureForm: React.FC<BrochureFormProps> = ({
           </div>
 
           <div className="field-group">
-            <label className="field-label">
-              J'aimerais participer à la zone de pitch sur un créneau de 10 minutes
-            </label>
-            <div className="inline-radio-group">
+           <label className="field-label">
+             J'aimerais participer à la zone de pitch sur un créneau de 10 minutes{' '}
+             <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>
+               (dans la limite des places disponibles)
+             </span>
+           </label>
+           <span className="field-hint" style={{ display: 'block', marginBottom: 6 }}>
+             Sous réserve de disponibilité des créneaux le jour du forum.
+           </span>
+           <div className="inline-radio-group">
               {[
                 { label: 'Oui', val: true },
                 { label: 'Non', val: false },

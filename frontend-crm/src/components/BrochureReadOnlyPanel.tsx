@@ -126,7 +126,12 @@ export const BrochureReadOnlyPanel: React.FC<{ companyId: string }> = ({ company
           Formulaire Exposant (Lecture seule)
         </h3>
         <span style={{ fontSize: 12, opacity: 0.7 }}>
-          Dernière soumission : {new Date(data.updated_at).toLocaleString('fr-FR')}
+          Dernière soumission :{' '}
+          {new Date(
+            data.updated_at.endsWith('Z')
+              ? data.updated_at
+              : `${data.updated_at.replace(' ', 'T')}Z`
+          ).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}
         </span>
       </div>
 

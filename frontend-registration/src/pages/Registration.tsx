@@ -181,10 +181,15 @@ export const Registration: React.FC = () => {
 
           <div className="portal-header__actions">
             {data.updated_at && (
-              <span className="save-indicator">
-                Enregistré le {new Date(data.updated_at).toLocaleString('fr-FR')}
-              </span>
-            )}
+            <span className="save-indicator">
+              Enregistré le{' '}
+              {new Date(
+                data.updated_at.endsWith('Z')
+                  ? data.updated_at
+                  : `${data.updated_at.replace(' ', 'T')}Z`
+              ).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}
+            </span>
+          )}
             <a href="mailto:contact@genius-cs.fr" className="btn btn-ghost btn-sm">
               Aide
             </a>
@@ -196,27 +201,53 @@ export const Registration: React.FC = () => {
       </header>
 
       <main className="portal-container">
-        <div className={`portal-banner ${data.is_locked ? 'portal-banner--locked' : ''}`}>
-          <div className="portal-banner__meta">
-            <span>
-              Dossier : <strong>{data.crm_company_name}</strong>
-            </span>
-            <span>
-              Champs obligatoires :{' '}
-              <strong>
-                {completedRequiredCount} / {REQUIRED_FIELDS.length}
-              </strong>
-            </span>
-          </div>
+        <div
+         className={`portal-banner ${data.is_locked ? 'portal-banner--locked' : ''}`}
+         style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}
+       >
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+           <div className="portal-banner__meta">
+             <span>
+               Dossier : <strong>{data.crm_company_name}</strong>
+             </span>
+             <span>
+               Champs obligatoires (<span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>) :{' '}
+               <strong>
+                 {completedRequiredCount} / {REQUIRED_FIELDS.length}
+               </strong>
+             </span>
+           </div>
 
-          {data.is_locked ? (
-            <span className="badge badge--warning">Saisie clôturée (lecture seule)</span>
-          ) : completedRequiredCount === REQUIRED_FIELDS.length ? (
-            <span className="badge badge--success">Dossier complet</span>
-          ) : (
-            <span className="badge badge--neutral">En cours de rédaction</span>
-          )}
-        </div>
+           {data.is_locked ? (
+             <span className="badge badge--warning">Saisie clôturée (lecture seule)</span>
+           ) : completedRequiredCount === REQUIRED_FIELDS.length ? (
+             <span className="badge badge--success">Dossier complet</span>
+           ) : (
+             <span className="badge badge--neutral">En cours de rédaction</span>
+           )}
+         </div>
+
+         <div
+           style={{
+             fontSize: '0.84rem',
+             lineHeight: 1.5,
+             paddingTop: 10,
+             borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+             display: 'flex',
+             flexWrap: 'wrap',
+             gap: '6px 16px',
+             alignItems: 'center',
+           }}
+         >
+           <span>
+             <strong style={{ color: '#dc2626' }}>* Champs obligatoires :</strong> indispensables pour enregistrer votre dossier.
+           </span>
+           <span style={{ color: 'var(--text-muted)' }}>
+             Les autres champs sont <strong>facultatifs</strong>, mais il est préférable d’en remplir{' '}
+             <strong>le plus possible</strong> afin de valoriser votre entreprise auprès des étudiants.
+           </span>
+         </div>
+       </div>
 
         {bannerFeedback && (
           <div

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BrochureFormData,
   CONTRACT_LABELS,
@@ -10,19 +10,111 @@ interface Props {
 }
 
 export const BrochureLivePreview: React.FC<Props> = ({ data }) => {
-  const companyName = getEffectiveCompanyName(data) || 'Nom de votre entreprise';
-  const contracts = [
-    ...data.contract_types.map((c) => CONTRACT_LABELS[c]),
-    ...(data.other_contract_type.trim() ? [data.other_contract_type.trim()] : []),
-  ];
+  const [compactZoom, setCompactZoom] = useState(false);
+ const companyName = getEffectiveCompanyName(data) || 'Nom de votre entreprise';
+ const contracts = [
+   ...data.contract_types.map((c) => CONTRACT_LABELS[c]),
+   ...(data.other_contract_type.trim() ? [data.other_contract_type.trim()] : []),
+ ];
 
-  return (
-    <aside className="preview-sticky">
-      <div className="brochure-sheet">
-        <div className="brochure-sheet__eyebrow">
-          <span>Aperçu Brochure Étudiants</span>
-          <span className="badge badge--neutral">NovaTech</span>
-        </div>
+ return (
+   <aside
+     className="preview-sticky"
+     style={{
+       position: 'sticky',
+       top: 84,
+       maxHeight: 'calc(100vh - 104px)',
+       display: 'flex',
+       flexDirection: 'column',
+       gap: 10,
+     }}
+   >
+     {/* Barre d'outils fixe au-dessus de l'aperçu */}
+     <div
+       style={{
+         display: 'flex',
+         alignItems: 'center',
+         justifyContent: 'space-between',
+         gap: 8,
+         padding: '8px 12px',
+         background: 'var(--bg-surface, #fff)',
+         border: '1px solid var(--border-subtle, #e5e7eb)',
+         borderRadius: 'var(--radius-md, 8px)',
+         flexShrink: 0,
+       }}
+     >
+       <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+         Aperçu en direct
+       </span>
+       <div
+         role="group"
+         aria-label="Zoom de l'aperçu"
+         style={{
+           display: 'inline-flex',
+           background: 'var(--bg-subtle, #f3f4f6)',
+           padding: 2,
+           borderRadius: 6,
+           gap: 2,
+         }}
+       >
+         <button
+           type="button"
+           onClick={() => setCompactZoom(false)}
+           style={{
+             border: 'none',
+             borderRadius: 5,
+             padding: '3px 9px',
+             fontSize: '0.74rem',
+             fontWeight: 600,
+             cursor: 'pointer',
+             background: !compactZoom ? '#fff' : 'transparent',
+             color: !compactZoom ? '#111827' : 'var(--text-muted)',
+             boxShadow: !compactZoom ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+           }}
+         >
+           100 %
+         </button>
+         <button
+           type="button"
+           onClick={() => setCompactZoom(true)}
+           style={{
+             border: 'none',
+             borderRadius: 5,
+             padding: '3px 9px',
+             fontSize: '0.74rem',
+             fontWeight: 600,
+             cursor: 'pointer',
+             background: compactZoom ? '#fff' : 'transparent',
+             color: compactZoom ? '#111827' : 'var(--text-muted)',
+             boxShadow: compactZoom ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+           }}
+         >
+           Vue globale
+         </button>
+       </div>
+     </div>
+
+     {/* Zone à défilement interne indépendant */}
+     <div
+       style={{
+         overflowY: 'auto',
+         overscrollBehavior: 'contain',
+         paddingRight: 2,
+         borderRadius: 'var(--radius-lg, 12px)',
+       }}
+     >
+       <div
+         className="brochure-sheet"
+         style={{
+           zoom: compactZoom ? 0.78 : 1,
+           transition: 'zoom 0.15s ease',
+         }}
+       >
+         <div className="brochure-sheet__eyebrow">
+           <span>Aperçu Brochure Étudiants</span>
+           <span className="badge badge--neutral">NovaTech</span>
+         </div>
+         
 
         <div className="brochure-sheet__header">
           <div className="brochure-sheet__logo-box">
@@ -138,10 +230,11 @@ export const BrochureLivePreview: React.FC<Props> = ({ data }) => {
         )}
 
         <div className="brochure-sheet__footer">
-          <span>{data.website || 'www.entreprise.fr'}</span>
-          <span>{data.public_email || data.public_phone || ''}</span>
-        </div>
-      </div>
-    </aside>
-  );
+           <span>{data.website || 'www.entreprise.fr'}</span>
+           <span>{data.public_email || data.public_phone || ''}</span>
+         </div>
+       </div>
+     </div>
+   </aside>
+ );
 };
