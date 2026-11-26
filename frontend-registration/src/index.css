@@ -431,9 +431,24 @@ h3 {
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.dropzone:hover {
+.dropzone:hover,
+.dropzone--active {
   border-color: var(--accent);
   background-color: var(--accent-soft);
+}
+
+.dropzone__title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dropzone__hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78125rem;
+  color: var(--text-muted);
 }
 
 .logo-preview-grid {
@@ -467,8 +482,10 @@ h3 {
 }
 
 .logo-swatch img {
-  max-height: 54px;
-  max-width: 160px;
+  max-height: 64px;
+  max-width: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
 }
 
@@ -541,21 +558,24 @@ h3 {
 }
 
 .brochure-sheet__logo-box {
-  width: 68px;
-  height: 68px;
+  min-width: 72px;
+  max-width: 185px;
+  height: 64px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background-color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 8px 12px;
   flex-shrink: 0;
 }
 
 .brochure-sheet__logo-box img {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 160px;
+  max-height: 48px;
+  width: auto;
+  height: auto;
   object-fit: contain;
 }
 

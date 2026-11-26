@@ -357,11 +357,59 @@ fn generate_company_password() -> String {
         .collect()
 }
 
-/// POST /api/companies/:id/regenerate-password
+async fn ensure_admin_staff(
+    state: &Arc<AppState>,
+    headers: &HeaderMap,
+) -> Result<(), (StatusCode, String)> {
+    let auth_header = headers
+        .get("Authorization")
+        .and_then(|h| h.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Token manquant".to_string()))?;
+
+    let token = auth_header
+        .strip_prefix("Bearer ")
+        .ok_or((StatusCode::UNAUTHORIZED, "Format de token invalide".to_string()))?;
+
+    if let Ok(claims) = crate::auth::jwt::validate_token(token, &state.config.jwt_secret) {
+        if claims.role.eq_ignore_ascii_case("admin") {
+            return Ok(());
+        }
+        return Err((
+            StatusCode::FORBIDDEN,
+            "Action réservée aux administrateurs".to_string(),
+        ));
+    }
+
+    let token_data = jsonwebtoken::decode::<TokenClaims>(
+        token,
+        &jsonwebtoken::DecodingKey::from_secret("SECRET_KEY".as_ref()),
+        &jsonwebtoken::Validation::default(),
+    )
+    .map_err(|_| (StatusCode::UNAUTHORIZED, "Token invalide ou expiré".to_string()))?;
+
+    let role: Option<String> = sqlx::query_scalar("SELECT role FROM members WHERE id = ?")
+        .bind(&token_data.claims.sub)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    match role {
+        Some(r) if r.eq_ignore_ascii_case("admin") => Ok(()),
+        Some(_) => Err((
+            StatusCode::FORBIDDEN,
+            "Action réservée aux administrateurs".to_string(),
+        )),
+        None => Err((StatusCode::UNAUTHORIZED, "Membre introuvable".to_string())),
+    }
+}
+
+/// POST /api/companies/:id/regenerate-password (Admin uniquement)
 pub async fn regenerate_password(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Path(id): Path<String>,
 ) -> Result<Json<Company>, (StatusCode, String)> {
+    ensure_admin_staff(&state, &headers).await?;
     let new_password = generate_company_password();
 
     sqlx::query("UPDATE companies SET company_password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")

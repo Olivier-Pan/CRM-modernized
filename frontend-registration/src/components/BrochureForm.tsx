@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BOOTH_LABELS,
   BoothSize,
@@ -29,7 +29,30 @@ export const BrochureForm: React.FC<BrochureFormProps> = ({
   const [otherChecked, setOtherChecked] = useState<boolean>(
     Boolean(data.other_contract_type.trim())
   );
+  const [dragOver, setDragOver] = useState(false);
   const disabled = Boolean(data.is_locked);
+
+  useEffect(() => {
+    if (disabled) return;
+    const handleWindowPaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          if (blob) {
+            const ext = (item.type.split('/')[1] || 'png').replace('svg+xml', 'svg');
+            const file = new File([blob], `logo-colle.${ext}`, { type: item.type });
+            event.preventDefault();
+            void onUploadLogo(file);
+            return;
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', handleWindowPaste);
+    return () => window.removeEventListener('paste', handleWindowPaste);
+  }, [disabled, onUploadLogo]);
 
   const update = <K extends keyof BrochureFormData>(key: K, value: BrochureFormData[K]) => {
     onChange({ ...data, [key]: value });
@@ -313,7 +336,20 @@ export const BrochureForm: React.FC<BrochureFormProps> = ({
           <div className="field-group">
             <label className="field-label">Logo haute définition (PNG transparent ou SVG recommandé)</label>
             {!disabled && (
-              <label className="dropzone">
+              <label
+                className={`dropzone ${dragOver ? 'dropzone--active' : ''}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) void onUploadLogo(file);
+                }}
+              >
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/svg+xml,image/webp"
@@ -321,9 +357,15 @@ export const BrochureForm: React.FC<BrochureFormProps> = ({
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) void onUploadLogo(file);
+                    e.target.value = '';
                   }}
                 />
-                <span>Cliquer pour importer votre logo (PNG, SVG, JPG — max 5 Mo)</span>
+                <span className="dropzone__title">
+                  Cliquez, glissez-déposez un fichier ou collez une image (Ctrl+V / Cmd+V)
+                </span>
+                <span className="dropzone__hint">
+                  Formats acceptés : PNG, SVG, JPG, WEBP — max 5 Mo
+                </span>
               </label>
             )}
             {data.logo_url && (

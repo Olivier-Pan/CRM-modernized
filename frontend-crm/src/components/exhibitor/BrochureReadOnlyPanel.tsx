@@ -266,22 +266,44 @@ export const BrochureReadOnlyPanel: React.FC<{ companyId: string }> = ({ company
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={sectionLabelStyle}>Données Brochure (Partagées aux élèves)</div>
 
-          {data.logo_url && !logoError && (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img
-                src={data.logo_url}
-                alt="Logo brochure"
-                onError={() => setLogoError(true)}
-                style={{
-                  maxHeight: 52,
-                  maxWidth: 180,
-                  objectFit: 'contain',
-                  background: '#FFFFFF',
-                  padding: '6px 10px',
-                  borderRadius: 6,
-                  border: '1px solid var(--border-subtle)',
-                }}
-              />
+          {data.logo_url && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {!logoError && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 80,
+                    maxWidth: 260,
+                    height: 64,
+                    background: '#FFFFFF',
+                    padding: '8px 14px',
+                    borderRadius: 6,
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                >
+                  <img
+                    src={data.logo_url}
+                    alt="Logo brochure"
+                    onError={() => setLogoError(true)}
+                    style={{
+                      maxHeight: 48,
+                      maxWidth: 230,
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                    }}
+                  />
+                </div>
+              )}
+              <a
+                href={data.logo_url}
+                download={data.logo_url.split('/').pop() || 'logo'}
+                className="crm-btn crm-btn-secondary crm-btn-sm"
+              >
+                Télécharger le logo
+              </a>
             </div>
           )}
 

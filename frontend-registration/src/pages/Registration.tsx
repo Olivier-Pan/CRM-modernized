@@ -116,6 +116,7 @@ export const Registration: React.FC = () => {
         type: 'error',
         text: 'Certains champs obligatoires (*) sont manquants ou invalides.',
       });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -138,11 +139,13 @@ export const Registration: React.FC = () => {
         type: 'success',
         text: 'Vos informations ont bien été enregistrées et transmises à l’équipe Genius.',
       });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setBannerFeedback({
         type: 'error',
         text: err instanceof Error ? err.message : "Erreur lors de l'enregistrement.",
       });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
     }

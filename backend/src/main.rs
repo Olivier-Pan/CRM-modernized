@@ -107,7 +107,8 @@ fn build_router(state: Arc<AppState>) -> Router {
         .route("/api/companies/:id/follow-ups", axum::routing::get(routes::follow_ups::list_follow_ups).post(routes::follow_ups::create_follow_up))
         .route("/api/companies/:id/follow-ups/:follow_up_id", axum::routing::put(routes::follow_ups::update_follow_up).delete(routes::follow_ups::delete_follow_up))
 
-        // Fichiers uploadés (logos exposants)
+        // Fichiers uploadés (logos exposants) — /api/uploads passe par le proxy Nginx existant
+        .nest_service("/api/uploads", ServeDir::new("uploads"))
         .nest_service("/uploads", ServeDir::new("uploads"))
 
         // Health check

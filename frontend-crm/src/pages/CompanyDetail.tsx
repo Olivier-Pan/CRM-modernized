@@ -260,7 +260,7 @@ export default function CompanyDetail() {
                 editionEventDate={editions.find((e) => e.id === company.edition_id)?.event_date}
                 senderName={me?.name}
                 senderEmail={me?.email}
-                isAdmin={Boolean(me?.is_admin)}
+                isAdmin={me?.role?.toLowerCase() === 'admin' || Boolean(me?.is_admin)}
                 onRegenerate={async () => {
                   const res = await regenerateCompanyPassword(company.id);
                   setCompany({ ...company, company_password: res.company_password });

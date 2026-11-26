@@ -312,6 +312,11 @@ async fn load_brochure_for_company(
     };
 
     let contracts: Vec<String> = serde_json::from_str(&r.contract_types).unwrap_or_default();
+    let normalized_logo_url = if r.logo_url.starts_with("/uploads/") {
+        format!("/api{}", r.logo_url)
+    } else {
+        r.logo_url
+    };
     let speakers: Vec<BrochureSpeaker> = serde_json::from_str(&r.speakers).unwrap_or_default();
 
     Ok(BrochurePayload {
@@ -328,7 +333,7 @@ async fn load_brochure_for_company(
         public_phone: r.public_phone,
         linkedin_url: r.linkedin_url,
         instagram_url: r.instagram_url,
-        logo_url: r.logo_url,
+        logo_url: normalized_logo_url,
         presentation: r.presentation,
         sought_profiles: r.sought_profiles,
         recruitment_process: r.recruitment_process,
@@ -539,7 +544,7 @@ pub async fn upload_exhibitor_logo(
                 .await
                 .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-            let public_url = format!("/uploads/logos/{}", stored_name);
+            let public_url = format!("/api/uploads/logos/{}", stored_name);
 
             sqlx::query(
                 r#"
