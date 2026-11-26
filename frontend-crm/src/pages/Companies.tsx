@@ -119,10 +119,10 @@ export default function Companies() {
    [sharks, members]
  );
 
- const filtered = companies
-   .filter((c) => {
-     // Filtre Statut et Recherche
-     if (selectedStatuses.length > 0 && !selectedStatuses.includes(c.global_status)) return false;
+const filtered = companies
+  .filter((c) => {
+    // Filtre Statut et Recherche
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(c.global_status as SharkStatus)) return false;
      if (searchQuery && !c.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
      
      // NOUVEAU : Filtre par Shark
@@ -418,24 +418,25 @@ export default function Companies() {
  );
 }
 
-function StatusBadge({ status }: { status: SharkStatus }) {
- const color = SHARK_STATUS_COLORS[status] || '#71717a';
- return (
-   <span style={{
-     display: 'inline-block',
-     padding: '4px 10px',
-     borderRadius: 999,
-     fontSize: 11,
-     fontWeight: 700,
-     background: `${color}15`,
-     color: color,
-     border: `1px solid ${color}33`,
-     letterSpacing: '0.04em',
-     textTransform: 'uppercase',
-   }}>
-     {SHARK_STATUS_LABELS[status]}
-   </span>
- );
+function StatusBadge({ status }: { status: SharkStatus | string }) {
+const s = status as SharkStatus;
+const color = SHARK_STATUS_COLORS[s] || '#71717a';
+return (
+  <span style={{
+    display: 'inline-block',
+    padding: '4px 10px',
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 700,
+    background: `${color}15`,
+    color: color,
+    border: `1px solid ${color}33`,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+  }}>
+    {SHARK_STATUS_LABELS[s] || status}
+  </span>
+);
 }
 
 const thStyle: React.CSSProperties = {

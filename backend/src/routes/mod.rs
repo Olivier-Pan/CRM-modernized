@@ -5,3 +5,4 @@ pub mod auth;
 pub mod members;
 pub mod logs;
 pub mod follow_ups;
+pub mod brochure;

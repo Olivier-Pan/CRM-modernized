@@ -7,29 +7,32 @@ import { MAIL_TEMPLATES, type MailTemplate } from '../lib/mailTemplates';
 type CopyKind = 'login' | 'password' | 'both';
 
 interface Props {
-  company: Company;
-  editionName?: string;
-  editionEventDate?: string;
-  senderName?: string;
-  /** Repli quand senderName est vide : le prenom vient de l'email. */
-  senderEmail?: string;
-  /** Date du dernier contact portee par le shark (modele de relance). */
-  lastContactDate?: string;
-  /** Renvoie true si la regeneration a reussi. Le parent gere l'API et l'alerte. */
-  onRegenerate: () => Promise<boolean>;
-  /** Ouvre le formulaire d'edition des infos (pour saisir l'email manquant). */
-  onEditContact: () => void;
+ company: Company;
+ contactEmail?: string;
+ editionName?: string;
+ editionEventDate?: string;
+ senderName?: string;
+ /** Repli quand senderName est vide : le prenom vient de l'email. */
+ senderEmail?: string;
+ /** Date du dernier contact portee par le shark (modele de relance). */
+ lastContactDate?: string;
+ /** Renvoie true si la regeneration a reussi. Le parent gere l'API et l'alerte. */
+ onRegenerate: () => Promise<boolean>;
+ /** Ouvre le formulaire d'edition des infos (pour saisir l'email manquant). */
+ onEditContact: () => void;
 }
 
+
 export default function ExhibitorAccessCard({
-  company,
-  editionName,
-  editionEventDate,
-  senderName,
-  senderEmail,
-  lastContactDate,
-  onRegenerate,
-  onEditContact,
+ company,
+ contactEmail,
+ editionName,
+ editionEventDate,
+ senderName,
+ senderEmail,
+ lastContactDate,
+ onRegenerate,
+ onEditContact,
 }: Props) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState<CopyKind | null>(null);
@@ -79,8 +82,8 @@ export default function ExhibitorAccessCard({
   );
 
   const mailtoUrl = useMemo(
-    () => buildMailtoUrl(company.contact_email, mail),
-    [company.contact_email, mail]
+    () => buildMailtoUrl(contactEmail, mail),
+    [contactEmail, mail]
   );
 
   const tooLong = isMailtoTooLong(mailtoUrl);
@@ -224,7 +227,7 @@ export default function ExhibitorAccessCard({
       </div>
 
       {/* Avertissements */}
-      {!company.contact_email && (
+      {!contactEmail && (
         <div style={warnStyle}>
           Aucun email de contact enregistré : le brouillon s'ouvrira sans destinataire.{' '}
           <button type="button" onClick={onEditContact} style={inlineLinkStyle}>

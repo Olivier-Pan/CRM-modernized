@@ -1,12 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Registration from './pages/Registration';
+import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { getExhibitorToken } from './api/exhibitor';
+import { Login } from './pages/Login';
+import { Registration } from './pages/Registration';
 import Contact from './pages/Contact';
-import { getToken } from './api/client';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const token = getToken();
-  if (!token) return <Navigate to="/login" replace />;
+  const token = getExhibitorToken();
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -15,7 +18,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        {/* Public : une entreprise pas encore contactee peut se manifester. */}
+        {/* Public : une entreprise pas encore contactée peut se manifester */}
         <Route path="/contact" element={<Contact />} />
         <Route
           path="/registration"
