@@ -25,7 +25,11 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 
-
+#SQL/DB
+*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 
 
 
