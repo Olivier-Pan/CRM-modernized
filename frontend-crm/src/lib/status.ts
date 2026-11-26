@@ -26,6 +26,15 @@ export const INACTIVE_RELANCE_STATUSES: SharkStatus[] = [
   'Refused',
 ];
 
+export const EXHIBITOR_PORTAL_STATUSES: SharkStatus[] = [
+  'VerbalAgreement',
+  'Signed',
+];
+
+export function isExhibitorPortalEligible(status: string): boolean {
+  return EXHIBITOR_PORTAL_STATUSES.includes(status as SharkStatus);
+}
+
 export interface StatusVars {
   text: string;
   bg: string;

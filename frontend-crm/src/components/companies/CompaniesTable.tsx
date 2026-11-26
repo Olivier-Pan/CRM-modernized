@@ -1,5 +1,6 @@
 import React from 'react';
 import { isCompanyOverdue } from '../../lib/companiesFilter';
+import { isExhibitorPortalEligible } from '../../lib/status';
 import { formatRelativeDate } from '../../lib/dates';
 import type { Company, SharkStatus } from '../../types';
 import CompanyAvatar from '../ui/CompanyAvatar';
@@ -44,7 +45,7 @@ export default function CompaniesTable({
               <th style={{ ...thStyle, width: 175 }}>Statut</th>
               <th style={{ ...thStyle, width: 220 }}>Responsables</th>
               <th style={{ ...thStyle, width: 140 }}>Activité</th>
-              <th style={{ ...thStyle, width: 115, textAlign: 'right' }}>Portail</th>
+              <th style={{ ...thStyle, width: 155, textAlign: 'right' }}>Portail</th>
             </tr>
           </thead>
           <tbody>
@@ -154,26 +155,55 @@ export default function CompaniesTable({
                       </span>
                     </td>
 
-                    {/* 5. Indicateur portail exposant */}
+                    {/* 5. Indicateur portail exposant & formulaire */}
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      {company.global_status === 'Signed' ? (
+                      {company.brochure_filled ? (
                         <span
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            padding: '2px 7px',
+                            gap: 5,
+                            padding: '2px 8px',
                             borderRadius: 5,
                             fontSize: 11.5,
                             fontWeight: 500,
+                            whiteSpace: 'nowrap',
+                            color: 'var(--status-success-text)',
+                            background: 'var(--status-success-bg)',
+                            border: '1px solid var(--status-success-border)',
+                          }}
+                        >
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              background: 'var(--status-success-text)',
+                              flexShrink: 0,
+                            }}
+                          />
+                          Formulaire rempli
+                        </span>
+                      ) : isExhibitorPortalEligible(company.global_status) ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '2px 8px',
+                            borderRadius: 5,
+                            fontSize: 11.5,
+                            fontWeight: 500,
+                            whiteSpace: 'nowrap',
                             color: company.company_password
-                              ? 'var(--status-success-text)'
+                              ? 'var(--status-info-text)'
                               : 'var(--status-warning-text)',
                             background: company.company_password
-                              ? 'var(--status-success-bg)'
+                              ? 'var(--status-info-bg)'
                               : 'var(--status-warning-bg)',
                             border: `1px solid ${
                               company.company_password
-                                ? 'var(--status-success-border)'
+                                ? 'var(--status-info-border)'
                                 : 'var(--status-warning-border)'
                             }`,
                           }}

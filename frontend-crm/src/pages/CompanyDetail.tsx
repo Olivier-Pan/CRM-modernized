@@ -17,6 +17,7 @@ import CompanyContactsSection from '../components/company-detail/CompanyContacts
 import InternalRemarkCard from '../components/company-detail/InternalRemarkCard';
 import ExhibitorAccessCard from '../components/exhibitor/ExhibitorAccessCard';
 import { BrochureReadOnlyPanel } from '../components/exhibitor/BrochureReadOnlyPanel';
+import { isExhibitorPortalEligible } from '../lib/status';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import Spinner from '../components/ui/Spinner';
 import type {
@@ -232,7 +233,7 @@ export default function CompanyDetail() {
               onStatusChange={handleGlobalStatusChange}
             />
 
-            {company.global_status === 'Signed' && (
+            {isExhibitorPortalEligible(company.global_status) && (
               <BrochureReadOnlyPanel companyId={company.id} />
             )}
           </div>
@@ -252,7 +253,7 @@ export default function CompanyDetail() {
               onCompanyUpdated={setCompany}
             />
 
-            {company.global_status === 'Signed' && (
+            {isExhibitorPortalEligible(company.global_status) && (
               <ExhibitorAccessCard
                 company={company}
                 contactEmail={

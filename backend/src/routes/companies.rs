@@ -48,12 +48,31 @@ struct TokenClaims {
 }
 
 
+#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+pub struct CompanyListItem {
+    #[serde(flatten)]
+    #[sqlx(flatten)]
+    pub company: Company,
+    pub brochure_filled: bool,
+}
+
 /// GET /api/companies
 pub async fn list_companies(
     State(state): State<Arc<AppState>>,
-) -> Result<Json<Vec<Company>>, (StatusCode, String)> {
-    let companies = sqlx::query_as::<_, Company>(
-        "SELECT * FROM companies ORDER BY updated_at DESC"
+) -> Result<Json<Vec<CompanyListItem>>, (StatusCode, String)> {
+    let companies = sqlx::query_as::<_, CompanyListItem>(
+        r#"
+        SELECT c.*,
+               EXISTS(
+                   SELECT 1
+                   FROM company_brochures b
+                   WHERE b.company_id = c.id
+                     AND b.updated_at IS NOT NULL
+                     AND TRIM(b.updated_at) != ''
+               ) AS brochure_filled
+        FROM companies c
+        ORDER BY c.updated_at DESC
+        "#
     )
     .fetch_all(&state.db)
     .await

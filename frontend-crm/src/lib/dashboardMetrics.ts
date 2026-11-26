@@ -74,16 +74,19 @@ export function buildPersonalActionPlan(params: {
           parseLocalDate(b.follow_up_date).getTime()
       );
 
-    let derivedStatus = company.global_status || 'ToContact';
+    const globalStatus = company.global_status || 'ToContact';
+    let derivedStatus = globalStatus;
     let diffDays = daysSince(company.updated_at);
 
     if (compFups.length > 0) {
       const lastFup = compFups[compFups.length - 1];
       diffDays = daysSince(lastFup.follow_up_date);
 
-      if (lastFup.notes === 'Passé en discussion') derivedStatus = 'InDiscussion';
-      else if (lastFup.notes === 'Abandonné') derivedStatus = 'NoAnswer';
-      else derivedStatus = 'Contacted';
+      if (globalStatus === 'ToContact' || globalStatus === 'Contacted') {
+        if (lastFup.notes === 'Passé en discussion') derivedStatus = 'InDiscussion';
+        else if (lastFup.notes === 'Abandonné') derivedStatus = 'NoAnswer';
+        else derivedStatus = 'Contacted';
+      }
     }
 
     if (['Signed', 'VerbalAgreement', 'Refused', 'NoAnswer'].includes(derivedStatus)) {

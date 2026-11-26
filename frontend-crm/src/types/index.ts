@@ -34,6 +34,7 @@ export interface Company {
   forum_contract_date?: string | null;
   internal_remark?: string | null;
   company_password?: string | null;
+  brochure_filled?: boolean;
   created_at: string;
   updated_at: string
   legal_name?: string | null;
