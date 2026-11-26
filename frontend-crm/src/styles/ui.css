@@ -1,0 +1,230 @@
+/* ============================================================================
+   BOUTONS — HIÉRARCHIE STRICTE À 4 NIVEAUX
+   ============================================================================ */
+.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.crm-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.crm-btn:focus-visible,
+.crm-icon-btn:focus-visible,
+.crm-input:focus-visible,
+.crm-select:focus-visible,
+.crm-search-trigger:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.crm-btn-sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+
+.crm-btn-primary {
+  background: var(--accent);
+  color: #FFFFFF;
+  padding: 0 14px;
+}
+
+.crm-btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.crm-btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.crm-btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.crm-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  height: 30px;
+  padding: 0 10px;
+}
+
+.crm-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.crm-btn-ghost-danger {
+  background: transparent;
+  color: var(--text-tertiary);
+  border-color: var(--border-subtle);
+}
+
+.crm-btn-ghost-danger:hover:not(:disabled) {
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+  border-color: var(--status-danger-border);
+}
+
+.crm-btn-danger {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+
+.crm-btn-danger:hover:not(:disabled) {
+  background: #B91C1C;
+}
+
+.crm-btn-amber {
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+  border-color: var(--status-warning-border);
+}
+
+.crm-btn-amber:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.crm-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.crm-icon-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.crm-icon-btn-danger:hover:not(:disabled) {
+  background: var(--status-danger-bg);
+  border-color: var(--status-danger-border);
+  color: var(--status-danger-text);
+}
+
+/* ============================================================================
+   SURFACES, CHAMPS, MENUS, MODALES & PROGRESS BARS
+   ============================================================================ */
+.crm-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
+.crm-input,
+.crm-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.crm-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.crm-input:focus,
+.crm-select:focus {
+  border-color: var(--border-focus);
+  background: var(--bg-surface);
+}
+
+.crm-dropdown {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-popover);
+  padding: 4px;
+}
+
+.crm-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.crm-dropdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.crm-dropdown-item--danger {
+  color: var(--status-danger-text);
+}
+
+.crm-dropdown-item--danger:hover {
+  background: var(--status-danger-bg);
+}
+
+.crm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.crm-modal {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.crm-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  overflow: hidden;
+}
+
+.crm-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}

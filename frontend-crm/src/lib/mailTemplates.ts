@@ -9,26 +9,15 @@ import {
 
 const SIGNATURE_ORG = 'Genius CentraleSupélec';
 
-export const BOOTH_LABELS: Record<string, string> = {
-  CLASSIQUE: 'Stand classique',
-  PREMIUM: 'Stand premium',
-};
-
-const PARTICIPATION_LABELS: Record<string, string> = {
-  conference: 'Conférence',
-  workshop: 'Workshop / Atelier',
-  pitch: 'Zone de pitch',
-};
-
 export interface TemplateContext {
   company: Company;
+  contactName?: string;
+  contactEmail?: string;
   editionName?: string;
   editionEventDate?: string;
   senderName?: string;
-  /** Repli quand senderName est vide : le prenom vient de l'email. */
   senderEmail?: string;
   deadline?: string;
-  /** Date du dernier contact, portee par le shark. */
   lastContactDate?: string;
 }
 
@@ -36,15 +25,10 @@ export interface MailTemplate {
   id: string;
   label: string;
   hint: string;
-  /** Ce modele contient le mot de passe : inutile de le proposer sans. */
   needsPassword?: boolean;
   build: (ctx: TemplateContext) => ExhibitorMail;
 }
 
-/**
- * Collecte les champs restes en placeholder, pour que l'interface puisse
- * prevenir le shark avant qu'il n'envoie un mail avec des [crochets] dedans.
- */
 class Draft {
   missing: string[] = [];
 
@@ -70,7 +54,7 @@ function signature(d: Draft, ctx: TemplateContext): string {
 
 function greeting(d: Draft, ctx: TemplateContext): string {
   const who = d.need(
-    firstNameOrFromEmail(ctx.company.contact_name, ctx.company.contact_email),
+    firstNameOrFromEmail(ctx.contactName, ctx.contactEmail),
     '[Prénom]',
     'le prénom du contact'
   );
@@ -81,31 +65,16 @@ function edition(d: Draft, ctx: TemplateContext): string {
   return d.need(ctx.editionName, '[Édition]', "le nom de l'édition");
 }
 
-function participationList(company: Company): string[] {
-  return (company.participation_options || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((k) => PARTICIPATION_LABELS[k] || k);
-}
-
-/** Ce qui manque encore sur la fiche exposant de l'entreprise. */
 export function missingProfileFields(company: Company): string[] {
-  const checks: Array<[string | undefined, string]> = [
+  const checks: Array<[string | null | undefined, string]> = [
     [company.description, "une description de l'entreprise"],
     [company.logo_url, 'votre logo'],
     [company.sector, "votre secteur d'activité"],
     [company.website, 'votre site web'],
-    [company.offers, 'les offres proposées (stages, alternances, CDI)'],
-    [company.booth_size, 'la taille de stand souhaitée'],
-    [company.representatives, 'les représentants présents le jour J'],
+    [company.size, 'votre effectif'],
   ];
   return checks.filter(([v]) => !(v || '').trim()).map(([, label]) => label);
 }
-
-// ──────────────────────────────────────────────
-// Les modèles
-// ──────────────────────────────────────────────
 
 const firstContact: MailTemplate = {
   id: 'first-contact',
@@ -145,8 +114,8 @@ const credentials: MailTemplate = {
       companyName: ctx.company.name,
       companyPassword: (ctx.company.company_password || '').trim(),
       editionName: ctx.editionName,
-      contactName: ctx.company.contact_name,
-      contactEmail: ctx.company.contact_email,
+      contactName: ctx.contactName,
+      contactEmail: ctx.contactEmail,
       senderName: ctx.senderName,
       senderEmail: ctx.senderEmail,
       deadline: ctx.deadline,
@@ -229,13 +198,11 @@ const incompleteProfile: MailTemplate = {
 const signedConfirmation: MailTemplate = {
   id: 'signed-confirmation',
   label: 'Confirmation',
-  hint: 'À envoyer quand la participation est actée. Récapitule le stand et les options.',
+  hint: 'À envoyer quand la participation est actée.',
   build: (ctx) => {
     const d = new Draft();
     const ed = edition(d, ctx);
     const when = formatFrenchDate(ctx.editionEventDate);
-    const booth = (ctx.company.booth_size || '').trim();
-    const options = participationList(ctx.company);
 
     const lines = [
       greeting(d, ctx),
@@ -244,19 +211,17 @@ const signedConfirmation: MailTemplate = {
         ? `C'est confirmé : ${ctx.company.name} sera présente au ${ed}, le ${when}.`
         : `C'est confirmé : ${ctx.company.name} sera présente au ${ed}.`,
       '',
-      'Récapitulatif de votre participation :',
-      `    Stand : ${booth ? BOOTH_LABELS[booth] || booth : '[à préciser]'}`,
-      `    Options : ${options.length > 0 ? options.join(', ') : 'aucune option supplémentaire'}`,
-      '',
       `Prochaine étape, si ce n'est pas déjà fait : compléter votre fiche exposant sur ${REGISTRATION_URL}`,
       '',
       'Je reste votre contact jusqu’au jour J.',
       signature(d, ctx),
     ];
 
-    if (!booth) d.missing.push('la taille du stand');
-
-    return { subject: `${ed} — votre participation est confirmée`, body: lines.join('\r\n'), missing: d.missing };
+    return {
+      subject: `${ed} — votre participation est confirmée`,
+      body: lines.join('\r\n'),
+      missing: d.missing,
+    };
   },
 };
 
@@ -272,7 +237,6 @@ const practicalInfo: MailTemplate = {
       '[date de l’événement]',
       'la date de l’événement'
     );
-    const booth = (ctx.company.booth_size || '').trim();
 
     const body = [
       greeting(d, ctx),
@@ -283,10 +247,6 @@ const practicalInfo: MailTemplate = {
       '    Lieu : CentraleSupélec — 3 rue Joliot-Curie, 91190 Gif-sur-Yvette',
       '    Installation des stands : [heure à confirmer]',
       '    Accès et parking : [à compléter]',
-      '',
-      booth
-        ? `Votre stand : ${BOOTH_LABELS[booth] || booth}.`
-        : 'Votre stand vous sera indiqué à votre arrivée.',
       '',
       'Je reste joignable le jour J au [ton numéro].',
       '',
@@ -300,7 +260,6 @@ const practicalInfo: MailTemplate = {
   },
 };
 
-/** Ordre d'affichage : l'ordre du pipeline de prospection. */
 export const MAIL_TEMPLATES: MailTemplate[] = [
   firstContact,
   credentials,

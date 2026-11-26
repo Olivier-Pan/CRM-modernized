@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { updateContact } from '../../api/contacts';
 import { assignShark } from '../../api/sharks';
 import type { FollowUp } from '../../api/follow_ups';
 import { copyText } from '../../lib/clipboard';
-import { useTheme } from '../../hooks/useTheme';
 import type { Contact, Shark, SharkStatus, AuthUser, Member } from '../../types';
-import { getCompanyDetailTheme, externalHref } from './styles';
+import { IconClose, IconUser } from '../ui/Icons';
 import ContactForm, { CONTACT_TYPE_LABELS, type ContactFormValues } from './ContactForm';
 import ContactFollowUpTimeline from './ContactFollowUpTimeline';
+import styles from './ContactCard.module.css';
 
 interface ContactCardProps {
   contact: Contact;
@@ -35,6 +35,10 @@ function getInitials(firstName?: string, lastName?: string): string {
   return `${f}${l}`.toUpperCase() || '?';
 }
 
+function externalHref(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 export default function ContactCard({
   contact,
   companyId,
@@ -54,9 +58,6 @@ export default function ContactCard({
   onRequestDeleteFollowUp,
   onStatusChange,
 }: ContactCardProps) {
-  const theme = useTheme();
-  const t = getCompanyDetailTheme(theme);
-
   const [editingContact, setEditingContact] = useState(false);
   const [savingEditContact, setSavingEditContact] = useState(false);
   const [copiedField, setCopiedField] = useState<'email' | 'phone' | null>(null);
@@ -89,12 +90,18 @@ export default function ContactCard({
   }
 
   async function handleAssignShark(targetMemberId: string) {
+    if (!targetMemberId) return;
+    const defaultMethod =
+      contact.contact_type === 'company_linkedin' || (contact.linkedin_url && !contact.email)
+        ? 'LinkedIn'
+        : 'Email';
+
     try {
       const shark = await assignShark({
         company_id: companyId,
         contact_id: contact.id,
         member_id: targetMemberId,
-        contact_method: 'Email',
+        contact_method: defaultMethod,
       });
       onSharkAssigned(shark);
     } catch (err) {
@@ -102,7 +109,7 @@ export default function ContactCard({
     }
   }
 
-  const isMyShark = assignedShark && assignedShark.member_id === me?.id;
+  const isMyShark = Boolean(assignedShark && assignedShark.member_id === me?.id);
   const ownerName = assignedShark
     ? isMyShark
       ? 'Moi'
@@ -112,148 +119,65 @@ export default function ContactCard({
   const displayName =
     contact.contact_type === 'person'
       ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Contact sans nom'
-      : CONTACT_TYPE_LABELS[contact.contact_type];
-
-  const subtleSurface = theme === 'dark' ? 'rgba(255, 255, 255, 0.025)' : '#f8fafc';
-  const pillBg = theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9';
+      : CONTACT_TYPE_LABELS[contact.contact_type] || 'Canal générique';
 
   return (
-    <div
-      style={{
-        border: `1px solid ${contact.is_primary ? 'rgba(139, 92, 246, 0.45)' : t.border}`,
-        borderRadius: 14,
-        background: t.bgCard,
-        overflow: 'hidden',
-        boxShadow: contact.is_primary
-          ? theme === 'dark'
-            ? '0 4px 24px rgba(139, 92, 246, 0.08)'
-            : '0 4px 18px rgba(109, 40, 217, 0.06)'
-          : 'none',
-      }}
-    >
-      {/* EN-TÊTE UNIFIÉ */}
+    <div className={`${styles.card} ${contact.is_primary ? styles.cardPrimary : ''}`}>
       <div
-        style={{
-          padding: '18px 24px',
-          background: contact.is_primary
-            ? theme === 'dark'
-              ? 'linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.03) 100%)'
-              : 'linear-gradient(90deg, rgba(109, 40, 217, 0.05) 0%, rgba(109, 40, 217, 0.015) 100%)'
-            : subtleSurface,
-          borderBottom: assignedShark || editingContact ? `1px solid ${t.border}` : 'none',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 16,
-          flexWrap: 'wrap',
-        }}
+        className={`${styles.header} ${contact.is_primary ? styles.headerPrimary : ''} ${
+          assignedShark || editingContact ? styles.headerBordered : ''
+        }`}
       >
-        {/* Gauche : Avatar + Nom + Coordonnées */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, minWidth: 260, flex: 1 }}>
-          <div
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: 11,
-              background: contact.is_primary
-                ? 'rgba(139, 92, 246, 0.16)'
-                : theme === 'dark'
-                ? 'rgba(255, 255, 255, 0.06)'
-                : '#e2e8f0',
-              color: contact.is_primary ? t.primary : t.textTitle,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 14,
-              flexShrink: 0,
-              border: `1px solid ${contact.is_primary ? 'rgba(139, 92, 246, 0.3)' : 'transparent'}`,
-            }}
-          >
+        <div className={styles.identity}>
+          <div className={`${styles.avatar} ${contact.is_primary ? styles.avatarPrimary : ''}`}>
             {contact.contact_type === 'person' ? (
               getInitials(contact.first_name, contact.last_name)
             ) : contact.contact_type === 'company_linkedin' ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
                 <rect x="2" y="9" width="4" height="12" />
                 <circle cx="4" cy="4" r="2" />
               </svg>
             ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="4" width="20" height="16" rx="2" />
                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
               </svg>
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, fontSize: 15, color: t.textTitle }}>{displayName}</span>
-
-              {contact.is_primary && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    background: 'rgba(139, 92, 246, 0.14)',
-                    color: t.primary,
-                    border: '1px solid rgba(139, 92, 246, 0.28)',
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  Principal
-                </span>
-              )}
-
+          <div className={styles.identityBody}>
+            <div className={styles.nameRow}>
+              <span className={styles.name}>{displayName}</span>
+              {contact.is_primary && <span className={styles.primaryBadge}>Principal</span>}
               {contact.contact_type !== 'person' && (
-                <span style={{ fontSize: 11, fontWeight: 600, color: t.textSubMuted, background: pillBg, padding: '2px 8px', borderRadius: 6 }}>
-                  Canal générique
-                </span>
+                <span className={styles.genericBadge}>Canal générique</span>
               )}
             </div>
 
             {(contact.email || contact.phone || contact.linkedin_url) && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div className={styles.channelsRow}>
                 {contact.email && (
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <div className={styles.emailGroup}>
                     <button
                       type="button"
                       onClick={() => handleCopyField('email', contact.email!)}
                       title="Cliquer pour copier l'email"
-                      className="crm-pill-action"
-                      style={copyPillStyle(t, copiedField === 'email')}
+                      className={`${styles.pill} ${copiedField === 'email' ? styles.pillCopied : ''}`}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="4" width="20" height="16" rx="2" />
                         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                       </svg>
-                      {copiedField === 'email' ? 'Copié !' : contact.email}
+                      <span>{copiedField === 'email' ? 'Copié' : contact.email}</span>
                     </button>
+
                     <a
                       href={`mailto:${encodeURIComponent(contact.email)}`}
-                      title="Ouvrir dans votre messagerie"
-                      className="crm-icon-btn"
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: 7,
-                        border: `1px solid ${t.border}`,
-                        background: t.bgCard,
-                        color: t.textSubMuted,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textDecoration: 'none',
-                      }}
+                      title="Ouvrir dans la messagerie"
+                      className={`crm-icon-btn ${styles.smallIconBtn}`}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13" />
                         <polygon points="22 2 15 22 11 13 2 9 22 2" />
                       </svg>
@@ -266,13 +190,12 @@ export default function ContactCard({
                     type="button"
                     onClick={() => handleCopyField('phone', contact.phone!)}
                     title="Cliquer pour copier le numéro"
-                    className="crm-pill-action"
-                    style={copyPillStyle(t, copiedField === 'phone')}
+                    className={`${styles.pill} ${copiedField === 'phone' ? styles.pillCopied : ''}`}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
                     </svg>
-                    {copiedField === 'phone' ? 'Numéro copié !' : contact.phone}
+                    <span>{copiedField === 'phone' ? 'Numéro copié' : contact.phone}</span>
                   </button>
                 )}
 
@@ -281,26 +204,10 @@ export default function ContactCard({
                     href={externalHref(contact.linkedin_url)}
                     target="_blank"
                     rel="noreferrer"
-                    className="crm-pill-action"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      padding: '4px 10px',
-                      borderRadius: 7,
-                      border: `1px solid ${t.border}`,
-                      background: t.bgCard,
-                      color: t.primary,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      textDecoration: 'none',
-                    }}
+                    className={`${styles.pill} ${styles.pillLink}`}
                   >
-                    LinkedIn
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M7 17 17 7" />
-                      <path d="M7 7h10v10" />
-                    </svg>
+                    <span>LinkedIn</span>
+                    <span aria-hidden="true">&#8599;</span>
                   </a>
                 )}
               </div>
@@ -308,36 +215,16 @@ export default function ContactCard({
           </div>
         </div>
 
-        {/* Droite : Responsable + Icônes d'action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className={styles.rightActions}>
           {!assignedShark ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <div className={styles.assignGroup}>
               <button
                 type="button"
                 onClick={() => handleAssignShark(me?.id || '')}
-                className="crm-btn"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(139, 92, 246, 0.35)',
-                  background: 'rgba(139, 92, 246, 0.12)',
-                  color: t.primary,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
+                className={`crm-btn crm-btn-secondary crm-btn-sm ${styles.assignSelfBtn}`}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <line x1="19" y1="8" x2="19" y2="14" />
-                  <line x1="22" y1="11" x2="16" y2="11" />
-                </svg>
-                M'assigner
+                <IconUser size={13} />
+                <span>M'assigner</span>
               </button>
 
               <select
@@ -347,85 +234,49 @@ export default function ContactCard({
                     e.target.value = '';
                   }
                 }}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  border: `1px solid ${t.border}`,
-                  background: t.bgCard,
-                  color: t.textSubMuted,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                }}
+                className={`crm-select ${styles.assignSelect}`}
                 defaultValue=""
                 title="Assigner à un autre membre"
+                aria-label="Assigner à un autre membre"
               >
-                <option value="" disabled>Assigner…</option>
+                <option value="" disabled>
+                  Assigner…
+                </option>
                 {members
                   .filter((m) => m.id !== me?.id)
                   .map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
                   ))}
               </select>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '5px 10px',
-                borderRadius: 8,
-                border: `1px solid ${isMyShark ? 'rgba(139, 92, 246, 0.32)' : t.border}`,
-                background: isMyShark ? 'rgba(139, 92, 246, 0.1)' : t.bgCard,
-                fontSize: 12,
-                fontWeight: 600,
-                color: isMyShark ? t.primary : t.textNormal,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+            <div className={`${styles.ownerChip} ${isMyShark ? styles.ownerChipMine : ''}`}>
+              <IconUser size={13} />
               <span>{ownerName}</span>
               <button
                 type="button"
                 onClick={() => onRequestUnassignShark(assignedShark.id)}
                 title="Se désassigner de ce contact"
-                className="crm-icon-btn crm-icon-btn-danger"
-                style={{
-                  background: 'none',
-                  border: '1px solid transparent',
-                  borderRadius: 5,
-                  color: t.textMuted,
-                  cursor: 'pointer',
-                  padding: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
+                className={`crm-icon-btn crm-icon-btn-danger ${styles.unassignBtn}`}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <IconClose size={12} />
               </button>
             </div>
           )}
 
-          <div style={{ width: 1, height: 20, background: t.border }} />
+          <div className={styles.divider} />
 
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <div className={styles.iconGroup}>
             {!contact.is_primary && (
               <button
                 type="button"
                 onClick={() => onSetPrimary(contact.id)}
                 title="Définir comme contact principal"
-                className="crm-icon-btn"
-                style={iconActionBtnStyle(t)}
+                className={`crm-icon-btn ${styles.surfaceIconBtn}`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               </button>
@@ -436,10 +287,9 @@ export default function ContactCard({
                 type="button"
                 onClick={() => setEditingContact(true)}
                 title="Modifier les informations du contact"
-                className="crm-icon-btn"
-                style={iconActionBtnStyle(t)}
+                className={`crm-icon-btn ${styles.surfaceIconBtn}`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                 </svg>
               </button>
@@ -449,10 +299,9 @@ export default function ContactCard({
               type="button"
               onClick={() => onRequestDeleteContact(contact.id)}
               title="Supprimer ce contact"
-              className="crm-icon-btn crm-icon-btn-danger"
-              style={{ ...iconActionBtnStyle(t), color: '#ef4444' }}
+              className={`crm-icon-btn crm-icon-btn-danger ${styles.surfaceIconBtn}`}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
@@ -461,12 +310,9 @@ export default function ContactCard({
         </div>
       </div>
 
-      {/* FORMULAIRE D'ÉDITION INLINE */}
       {editingContact && (
-        <div style={{ padding: '20px 24px', background: t.bgMain, borderBottom: assignedShark ? `1px solid ${t.border}` : 'none' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.textTitle, marginBottom: 14 }}>
-            Modifier les informations du contact
-          </div>
+        <div className={`${styles.editPanel} ${assignedShark ? styles.editPanelBordered : ''}`}>
+          <div className={styles.editTitle}>Modifier les informations du contact</div>
           <ContactForm
             initialValues={{
               contact_type: contact.contact_type,
@@ -484,7 +330,6 @@ export default function ContactCard({
         </div>
       )}
 
-      {/* TIMELINE & RELANCES */}
       {assignedShark && (
         <ContactFollowUpTimeline
           companyId={companyId}
@@ -502,37 +347,3 @@ export default function ContactCard({
     </div>
   );
 }
-
-const copyPillStyle = (
-  t: ReturnType<typeof getCompanyDetailTheme>,
-  copied: boolean
-): React.CSSProperties => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-  padding: '4px 10px',
-  borderRadius: 7,
-  border: `1px solid ${copied ? 'rgba(34, 197, 94, 0.45)' : t.border}`,
-  background: copied ? 'rgba(34, 197, 94, 0.12)' : t.bgCard,
-  color: copied ? '#22c55e' : t.textNormal,
-  fontSize: 12,
-  fontWeight: 500,
-  cursor: 'pointer',
-  fontFamily: 'inherit',
-});
-
-const iconActionBtnStyle = (
-  t: ReturnType<typeof getCompanyDetailTheme>
-): React.CSSProperties => ({
-  width: 30,
-  height: 30,
-  borderRadius: 8,
-  border: `1px solid ${t.border}`,
-  background: t.bgCard,
-  color: t.textSubMuted,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-  padding: 0,
-});
