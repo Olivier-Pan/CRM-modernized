@@ -45,9 +45,6 @@ export default function CompanyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Permet d'ouvrir le formulaire d'édition de la fiche identité depuis ExhibitorAccessCard
-  const [editInfoTrigger, setEditInfoTrigger] = useState(0);
-
   // --- MODALE DE CONFIRMATION ---
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -198,7 +195,6 @@ export default function CompanyDetail() {
           onCompanyUpdated={setCompany}
           onStatusChange={handleGlobalStatusChange}
           onDeleteClick={handleDeleteCompany}
-          externalEditTrigger={editInfoTrigger}
         />
       </div>
 
@@ -261,16 +257,14 @@ export default function CompanyDetail() {
                   contacts.find((c) => c.email)?.email
                 }
                 editionName={editions.find((e) => e.id === company.edition_id)?.name}
+                editionEventDate={editions.find((e) => e.id === company.edition_id)?.event_date}
                 senderName={me?.name}
                 senderEmail={me?.email}
+                isAdmin={Boolean(me?.is_admin)}
                 onRegenerate={async () => {
                   const res = await regenerateCompanyPassword(company.id);
                   setCompany({ ...company, company_password: res.company_password });
                   return true;
-                }}
-                onEditContact={() => {
-                  setEditInfoTrigger((n) => n + 1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
             )}

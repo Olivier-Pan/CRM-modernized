@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Company } from '../../types';
 import { copyText } from '../../lib/clipboard';
-import { buildMailtoUrl, defaultDeadline, isMailtoTooLong } from '../../lib/exhibitorEmail';
+import { defaultDeadline, REGISTRATION_URL } from '../../lib/exhibitorEmail';
 import { MAIL_TEMPLATES, type MailTemplate } from '../../lib/mailTemplates';
+import styles from './ExhibitorAccessCard.module.css';
 
-type CopyKind = 'login' | 'password' | 'both';
+type CopyKind = 'login' | 'password' | 'both' | 'subject' | 'body';
 
 interface Props {
   company: Company;
@@ -14,9 +15,17 @@ interface Props {
   senderName?: string;
   senderEmail?: string;
   lastContactDate?: string;
+  isAdmin?: boolean;
   onRegenerate: () => Promise<boolean>;
-  onEditContact: () => void;
 }
+
+const COPY_LABELS: Record<CopyKind, string> = {
+  login: 'Identifiant copié',
+  password: 'Mot de passe copié',
+  both: 'Accès copiés',
+  subject: 'Objet copié',
+  body: 'Mail copié',
+};
 
 export default function ExhibitorAccessCard({
   company,
@@ -26,8 +35,8 @@ export default function ExhibitorAccessCard({
   senderName,
   senderEmail,
   lastContactDate,
+  isAdmin = false,
   onRegenerate,
-  onEditContact,
 }: Props) {
   const [copied, setCopied] = useState<CopyKind | null>(null);
   const [deadline, setDeadline] = useState(() => defaultDeadline(editionEventDate));
@@ -53,6 +62,7 @@ export default function ExhibitorAccessCard({
     () =>
       template.build({
         company,
+        contactEmail,
         editionName,
         editionEventDate,
         senderName,
@@ -60,11 +70,21 @@ export default function ExhibitorAccessCard({
         deadline,
         lastContactDate,
       }),
-    [template, company, editionName, editionEventDate, senderName, senderEmail, deadline, lastContactDate]
+    [
+      template,
+      company,
+      contactEmail,
+      editionName,
+      editionEventDate,
+      senderName,
+      senderEmail,
+      deadline,
+      lastContactDate,
+    ]
   );
 
-  const mailtoUrl = useMemo(() => buildMailtoUrl(contactEmail, mail), [contactEmail, mail]);
-  const tooLong = isMailtoTooLong(mailtoUrl);
+  const normalizedBody = useMemo(() => mail.body.replace(/\r\n/g, '\n'), [mail.body]);
+  const canCopyMail = !template.needsPassword || hasPassword;
 
   async function handleCopy(kind: CopyKind, text: string) {
     const ok = await copyText(text);
@@ -88,81 +108,80 @@ export default function ExhibitorAccessCard({
   }
 
   return (
-    <div className="crm-card" style={{ padding: 18 }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 8,
-          marginBottom: 4,
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-          Accès exposant
-        </h2>
-        <span
-          aria-live="polite"
-          style={{ fontSize: 12, fontWeight: 600, color: 'var(--status-success-text)', minHeight: 16 }}
-        >
-          {copied ? 'Copié' : ''}
+    <div className={`crm-card ${styles.card}`}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Accès exposant</h2>
+        <span aria-live="polite" className={styles.copiedStatus}>
+          {copied ? COPY_LABELS[copied] : ''}
         </span>
       </div>
 
-      <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.45 }}>
-        Identifiants du portail brochure. À transmettre uniquement par email au contact.
+      <p className={styles.guideBox}>
+        Envoie l'<strong>identifiant</strong> et le <strong>mot de passe</strong> ci-dessous par
+        email à ton contact entreprise, puis redirige-le vers{' '}
+        <a
+          href={REGISTRATION_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.guideLink}
+        >
+          entreprise.genius-cs.fr
+        </a>{' '}
+        pour qu'il remplisse sa fiche exposant.
       </p>
 
       {/* Identifiant */}
-      <div style={rowStyle}>
-        <span style={rowLabelStyle}>Identifiant</span>
-        <code style={codeStyle}>{company.name}</code>
+      <div className={styles.credRow}>
+        <span className={styles.rowLabel}>Identifiant</span>
+        <code className={styles.code}>{company.name}</code>
         <button
           type="button"
           onClick={() => handleCopy('login', company.name)}
-          className="crm-btn crm-btn-ghost crm-btn-sm"
-          style={{ height: 26, padding: '0 8px' }}
+          className={`crm-btn crm-btn-ghost crm-btn-sm ${styles.compactBtn}`}
         >
           Copier
         </button>
       </div>
 
-      {/* Mot de passe (visible en clair par défaut) */}
-      <div style={{ ...rowStyle, marginTop: 8 }}>
-        <span style={rowLabelStyle}>Mot de passe</span>
+      {/* Mot de passe */}
+      <div className={styles.credRow}>
+        <span className={styles.rowLabel}>Mot de passe</span>
         {hasPassword ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-            <code style={codeStyle}>{password}</code>
+          <div className={styles.credActions}>
+            <code className={styles.code}>{password}</code>
             <button
               type="button"
               onClick={() => handleCopy('password', password)}
-              className="crm-btn crm-btn-ghost crm-btn-sm"
-              style={{ height: 26, padding: '0 8px' }}
+              className={`crm-btn crm-btn-ghost crm-btn-sm ${styles.compactBtn}`}
             >
               Copier
             </button>
             <button
               type="button"
               onClick={() =>
-                handleCopy('both', `Identifiant : ${company.name}\nMot de passe :${password}`)
+                handleCopy(
+                  'both',
+                  `Portail : ${REGISTRATION_URL}\nIdentifiant : ${company.name}\nMot de passe : ${password}`
+                )
               }
-              className="crm-btn crm-btn-ghost crm-btn-sm"
-              style={{ height: 26, padding: '0 8px' }}
+              className={`crm-btn crm-btn-ghost crm-btn-sm ${styles.compactBtn}`}
             >
               Tout copier
             </button>
           </div>
         ) : (
-          <span style={{ fontSize: 12.5, color: 'var(--status-warning-text)' }}>
-            Aucun mot de passe — régénère-en un.
+          <span className={styles.missingPassword}>
+            {isAdmin
+              ? 'Aucun mot de passe — génère-en un ci-dessous.'
+              : 'Aucun mot de passe — demande à un admin d’en générer un.'}
           </span>
         )}
       </div>
 
       {/* Modèles d'email */}
-      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
-        <div style={sectionLabelStyle}>Modèle d'email</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>Modèle d'email</div>
+        <div className={styles.templateList}>
           {MAIL_TEMPLATES.map((tpl) => {
             const active = tpl.id === template.id;
             return (
@@ -172,92 +191,63 @@ export default function ExhibitorAccessCard({
                 onClick={() => setTemplateId(tpl.id)}
                 aria-pressed={active}
                 title={tpl.hint}
-                style={{
-                  height: 26,
-                  padding: '0 10px',
-                  borderRadius: 6,
-                  fontSize: 12,
-                  fontWeight: active ? 600 : 500,
-                  background: active ? 'var(--accent-subtle-bg)' : 'var(--bg-subtle)',
-                  color: active ? 'var(--accent-text)' : 'var(--text-secondary)',
-                  border: `1px solid ${active ? 'var(--accent-subtle-border)' : 'var(--border-subtle)'}`,
-                }}
+                className={`${styles.templateBtn} ${active ? styles.templateBtnActive : ''}`}
               >
                 {tpl.label}
               </button>
             );
           })}
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.45 }}>
-          {template.hint}
-        </div>
-      </div>
+        <div className={styles.hint}>{template.hint}</div>
 
-      {/* Date limite */}
-      <div style={{ marginTop: 14 }}>
-        <div style={sectionLabelStyle}>Date limite annoncée</div>
-        <input
-          type="date"
-          className="crm-input"
-          value={deadline}
-          onChange={(e) => setDeadline(e.target.value)}
-          style={{ height: 34, fontSize: 13 }}
-        />
-      </div>
+        {/* Date limite */}
+        <div className={styles.deadlineBlock}>
+          <div className={styles.sectionLabel}>Date limite annoncée</div>
+          <input
+            type="date"
+            className={`crm-input ${styles.deadlineInput}`}
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
+        </div>
 
-      {/* Avertissements */}
-      {!contactEmail && (
-        <div style={warnStyle}>
-          Aucun email de contact enregistré : le brouillon s'ouvrira sans destinataire.{' '}
-          <button
-            type="button"
-            onClick={onEditContact}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              color: 'inherit',
-              fontWeight: 600,
-              textDecoration: 'underline',
-              fontSize: 'inherit',
-            }}
-          >
-            Ajouter l'email
-          </button>
+        {/* Aperçu du mail */}
+        <div className={styles.previewBox}>
+          <div className={styles.previewSubjectRow}>
+            <div className={styles.previewSubject}>
+              <span className={styles.previewSubjectTag}>Objet :</span>
+              {mail.subject}
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopy('subject', mail.subject)}
+              className={`crm-btn crm-btn-ghost crm-btn-sm ${styles.compactBtn}`}
+            >
+              {copied === 'subject' ? 'Copié' : 'Copier'}
+            </button>
+          </div>
+          <pre className={styles.previewBody}>{normalizedBody}</pre>
         </div>
-      )}
-      {mail.missing.length > 0 && (
-        <div style={warnStyle}>À compléter dans le brouillon : {mail.missing.join(', ')}.</div>
-      )}
-      {tooLong && (
-        <div style={warnStyle}>
-          Message trop long pour un lien mailto : copie les identifiants et rédige l'email manuellement.
-        </div>
-      )}
+
+        {mail.missing.length > 0 && (
+          <div className={styles.warnBox}>
+            À compléter avant envoi : {mail.missing.join(', ')}.
+          </div>
+        )}
+      </div>
 
       {/* Actions */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          marginTop: 16,
-          paddingTop: 14,
-          borderTop: '1px solid var(--border-subtle)',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}
-      >
-        {(!template.needsPassword || hasPassword) && !tooLong ? (
-          <a href={mailtoUrl} className="crm-btn crm-btn-primary crm-btn-sm">
-            Ouvrir le brouillon
-          </a>
-        ) : (
-          <button type="button" disabled className="crm-btn crm-btn-primary crm-btn-sm">
-            Ouvrir le brouillon
-          </button>
-        )}
+      <div className={styles.actionsRow}>
+        <button
+          type="button"
+          disabled={!canCopyMail}
+          onClick={() => handleCopy('body', normalizedBody)}
+          className="crm-btn crm-btn-primary crm-btn-sm"
+        >
+          {copied === 'body' ? 'Mail copié' : 'Copier le mail'}
+        </button>
 
-        {!confirmRegen && (
+        {isAdmin && !confirmRegen && (
           <button
             type="button"
             onClick={() => setConfirmRegen(true)}
@@ -268,24 +258,17 @@ export default function ExhibitorAccessCard({
         )}
       </div>
 
-      {/* Confirmation de régénération */}
-      {confirmRegen && (
-        <div
-          style={{
-            marginTop: 12,
-            padding: 12,
-            borderRadius: 8,
-            border: '1px solid var(--status-danger-border)',
-            background: 'var(--status-danger-bg)',
-          }}
-        >
-          <div style={{ fontSize: 12.5, color: 'var(--status-danger-text)', fontWeight: 600, marginBottom: 4 }}>
+      {/* Confirmation de régénération (Admin uniquement) */}
+      {isAdmin && confirmRegen && (
+        <div className={styles.regenConfirm}>
+          <div className={styles.regenTitle}>
             Régénérer le mot de passe de {company.name} ?
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: 10 }}>
-            L'ancien mot de passe cessera immédiatement de fonctionner. Tu devras lui renvoyer le nouveau.
+          <div className={styles.regenDesc}>
+            L'ancien mot de passe cessera immédiatement de fonctionner. Tu devras lui renvoyer le
+            nouveau.
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className={styles.regenBtns}>
             <button
               type="button"
               onClick={handleRegenerate}
@@ -308,51 +291,3 @@ export default function ExhibitorAccessCard({
     </div>
   );
 }
-
-const rowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-  flexWrap: 'wrap',
-};
-
-const rowLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  color: 'var(--text-tertiary)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-  width: 96,
-  flexShrink: 0,
-};
-
-const codeStyle: React.CSSProperties = {
-  background: 'var(--bg-subtle)',
-  border: '1px solid var(--border-subtle)',
-  padding: '3px 8px',
-  borderRadius: 6,
-  fontSize: 12.5,
-  color: 'var(--text-primary)',
-  letterSpacing: 0.4,
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-};
-
-const sectionLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  color: 'var(--text-tertiary)',
-  marginBottom: 6,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-};
-
-const warnStyle: React.CSSProperties = {
-  marginTop: 10,
-  fontSize: 12,
-  color: 'var(--status-warning-text)',
-  background: 'var(--status-warning-bg)',
-  border: '1px solid var(--status-warning-border)',
-  borderRadius: 6,
-  padding: '8px 10px',
-  lineHeight: 1.45,
-};

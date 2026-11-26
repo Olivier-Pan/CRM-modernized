@@ -39,6 +39,7 @@ const EMPTY_FORM: BrochureFormData = {
   contact_phone: '',
   booth_size: '',
   pitch_zone: null,
+  speakers: [{ full_name: '', role: '' }],
 };
 
 const REQUIRED_FIELDS: Array<{ key: keyof BrochureFormData; label: string }> = [
@@ -69,7 +70,13 @@ export const Registration: React.FC = () => {
     }
 
     fetchExhibitorBrochure()
-      .then((brochure) => setData({ ...EMPTY_FORM, ...brochure }))
+      .then((brochure) => {
+        const speakers =
+          Array.isArray(brochure.speakers) && brochure.speakers.length > 0
+            ? brochure.speakers
+            : [{ full_name: '', role: '' }];
+        setData({ ...EMPTY_FORM, ...brochure, speakers });
+      })
       .catch((err) => {
         setBannerFeedback({
           type: 'error',
@@ -114,8 +121,19 @@ export const Registration: React.FC = () => {
 
     setSaving(true);
     try {
-      const saved = await saveExhibitorBrochure(data);
-      setData((prev) => ({ ...prev, ...saved }));
+      const cleanedSpeakers = data.speakers
+        .map((s) => ({ full_name: s.full_name.trim(), role: s.role.trim() }))
+        .filter((s) => s.full_name || s.role)
+        .slice(0, 8);
+      const saved = await saveExhibitorBrochure({ ...data, speakers: cleanedSpeakers });
+      setData((prev) => ({
+        ...prev,
+        ...saved,
+        speakers:
+          Array.isArray(saved.speakers) && saved.speakers.length > 0
+            ? saved.speakers
+            : [{ full_name: '', role: '' }],
+      }));
       setBannerFeedback({
         type: 'success',
         text: 'Vos informations ont bien été enregistrées et transmises à l’équipe Genius.',
@@ -241,6 +259,9 @@ export const Registration: React.FC = () => {
          >
            <span>
              <strong style={{ color: '#dc2626' }}>* Champs obligatoires :</strong> indispensables pour enregistrer votre dossier.
+           </span>
+           <span style={{ color: 'var(--text-secondary)' }}>
+             Vous pouvez commencer par remplir uniquement les champs obligatoires, <strong>enregistrer votre fiche</strong>, puis revenir plus tard avec vos identifiants pour compléter ou modifier le reste.
            </span>
            <span style={{ color: 'var(--text-muted)' }}>
              Les autres champs sont <strong>facultatifs</strong>, mais il est préférable d’en remplir{' '}

@@ -32,6 +32,7 @@ interface CrmBrochureView {
   contact_phone?: string;
   booth_size?: 'standard' | 'premium' | 'custom' | '';
   pitch_zone?: boolean | null;
+  speakers?: Array<{ full_name: string; role: string }>;
   updated_at?: string | null;
 }
 
@@ -220,6 +221,44 @@ export const BrochureReadOnlyPanel: React.FC<{ companyId: string }> = ({ company
             {internalFields.map((field) => (
               <MetaField key={field.label} label={field.label} value={field.value} showEmpty />
             ))}
+          </div>
+
+          <div
+            style={{
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: '1px solid var(--border-subtle)',
+            }}
+          >
+            <div style={fieldLabelStyle}>
+              Intervenants présents le jour du forum ({data.speakers?.length ?? 0})
+            </div>
+            {data.speakers && data.speakers.length > 0 ? (
+              <ul
+                style={{
+                  margin: '6px 0 0',
+                  paddingLeft: 18,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                  fontSize: 13,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {data.speakers.map((sp, i) => (
+                  <li key={`${sp.full_name}-${i}`}>
+                    <strong>{sp.full_name || 'Sans nom'}</strong>
+                    {sp.role ? (
+                      <span style={{ color: 'var(--text-secondary)' }}> — {sp.role}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                Non renseigné
+              </div>
+            )}
           </div>
         </section>
 

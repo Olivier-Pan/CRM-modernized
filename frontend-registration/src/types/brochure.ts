@@ -8,6 +8,13 @@ export type ContractOption =
 
 export type BoothSize = 'standard' | 'premium' | 'custom' | '';
 
+export interface BrochureSpeaker {
+  full_name: string;
+  role: string;
+}
+
+export const MAX_SPEAKERS = 8;
+
 export interface BrochureFormData {
   // 01. Votre entreprise (partagé élèves)
   crm_company_name: string;
@@ -44,6 +51,9 @@ export interface BrochureFormData {
   // 04. Stand & Zone de pitch (interne Genius uniquement)
   booth_size: BoothSize;
   pitch_zone: boolean | null;
+
+  // 05. Intervenants présents le jour du forum (interne Genius uniquement)
+  speakers: BrochureSpeaker[];
 
   // Métadonnées backend
   is_locked?: boolean;

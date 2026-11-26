@@ -3,8 +3,10 @@ import {
   BOOTH_LABELS,
   BoothSize,
   BrochureFormData,
+  BrochureSpeaker,
   CONTRACT_LABELS,
   ContractOption,
+  MAX_SPEAKERS,
 } from '../types/brochure';
 
 interface BrochureFormProps {
@@ -39,6 +41,29 @@ export const BrochureForm: React.FC<BrochureFormProps> = ({
       ? data.contract_types.filter((item) => item !== option)
       : [...data.contract_types, option];
     update('contract_types', next);
+  };
+
+  const speakers = data.speakers.length > 0 ? data.speakers : [{ full_name: '', role: '' }];
+
+  const updateSpeaker = (index: number, field: keyof BrochureSpeaker, value: string) => {
+    const next = speakers.map((sp, i) => (i === index ? { ...sp, [field]: value } : sp));
+    update('speakers', next);
+  };
+
+  const addSpeaker = () => {
+    if (speakers.length >= MAX_SPEAKERS) return;
+    update('speakers', [...speakers, { full_name: '', role: '' }]);
+  };
+
+  const removeSpeaker = (index: number) => {
+    if (speakers.length <= 1) {
+      update('speakers', [{ full_name: '', role: '' }]);
+      return;
+    }
+    update(
+      'speakers',
+      speakers.filter((_, i) => i !== index)
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -660,6 +685,91 @@ export const BrochureForm: React.FC<BrochureFormProps> = ({
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          05. INTERVENANTS PRÉSENTS LE JOUR DU FORUM (INTERNE GENIUS)
+         ===================================================================== */}
+      <section className="card">
+        <div className="card-header">
+          <span className="section-index">05</span>
+          <div>
+            <h2>Intervenants présents le jour du forum</h2>
+            <p className="card-header__desc">
+              Indiquez les personnes qui représenteront votre entreprise le jour J (badges et accueil,
+              jusqu'à {MAX_SPEAKERS} intervenants).
+            </p>
+          </div>
+        </div>
+
+        <div className="form-stack">
+          <div className="rep-list">
+            {speakers.map((speaker, idx) => (
+              <div key={idx} className="rep-card">
+                <div className="rep-card__top">
+                  <span>Intervenant {idx + 1}</span>
+                  {!disabled && speakers.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn btn-danger-ghost btn-sm"
+                      onClick={() => removeSpeaker(idx)}
+                    >
+                      Retirer
+                    </button>
+                  )}
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor={`speaker_name_${idx}`}>
+                      Prénom et Nom
+                    </label>
+                    <input
+                      id={`speaker_name_${idx}`}
+                      type="text"
+                      className="input"
+                      placeholder="Ex. Claire Dupont"
+                      value={speaker.full_name}
+                      disabled={disabled}
+                      onChange={(e) => updateSpeaker(idx, 'full_name', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="field-group">
+                    <label className="field-label" htmlFor={`speaker_role_${idx}`}>
+                      Poste occupé
+                    </label>
+                    <input
+                      id={`speaker_role_${idx}`}
+                      type="text"
+                      className="input"
+                      placeholder="Ex. Ingénieure Data / Talent Acquisition"
+                      value={speaker.role}
+                      disabled={disabled}
+                      onChange={(e) => updateSpeaker(idx, 'role', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {!disabled && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={addSpeaker}
+                disabled={speakers.length >= MAX_SPEAKERS}
+              >
+                + Ajouter un intervenant
+              </button>
+              <span className="field-hint tabular">
+                {speakers.length} / {MAX_SPEAKERS} intervenants maximum
+              </span>
+            </div>
+          )}
         </div>
       </section>
 

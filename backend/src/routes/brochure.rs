@@ -138,6 +138,14 @@ pub async fn login_exhibitor(
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BrochureSpeaker {
+    #[serde(default)]
+    pub full_name: String,
+    #[serde(default)]
+    pub role: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BrochurePayload {
     #[serde(default)]
     pub crm_company_name: String,
@@ -196,6 +204,8 @@ pub struct BrochurePayload {
     #[serde(default)]
     pub booth_size: String,
     pub pitch_zone: Option<bool>,
+    #[serde(default)]
+    pub speakers: Vec<BrochureSpeaker>,
 
     #[serde(default)]
     pub is_locked: bool,
@@ -231,6 +241,7 @@ struct BrochureRow {
     contact_phone: String,
     booth_size: String,
     pitch_zone: Option<bool>,
+    speakers: String,
     is_locked: bool,
     updated_at: Option<String>,
 }
@@ -254,7 +265,7 @@ async fn load_brochure_for_company(
             logo_url, presentation, sought_profiles, recruitment_process, roles_offered,
             career_progression, abroad_positions, contract_types, other_contract_type,
             locations, contact_full_name, contact_email, contact_phone,
-            booth_size, pitch_zone, is_locked, updated_at
+            booth_size, pitch_zone, speakers, is_locked, updated_at
         FROM company_brochures
         WHERE company_id = ?
         "#,
@@ -294,12 +305,14 @@ async fn load_brochure_for_company(
             contact_phone: String::new(),
             booth_size: String::new(),
             pitch_zone: None,
+            speakers: vec![],
             is_locked: false,
             updated_at: None,
         });
     };
 
     let contracts: Vec<String> = serde_json::from_str(&r.contract_types).unwrap_or_default();
+    let speakers: Vec<BrochureSpeaker> = serde_json::from_str(&r.speakers).unwrap_or_default();
 
     Ok(BrochurePayload {
         crm_company_name: company_name,
@@ -330,6 +343,7 @@ async fn load_brochure_for_company(
         contact_phone: r.contact_phone,
         booth_size: r.booth_size,
         pitch_zone: r.pitch_zone,
+        speakers,
         is_locked: r.is_locked,
         updated_at: r.updated_at,
     })
@@ -383,6 +397,19 @@ pub async fn update_exhibitor_brochure(
     let contracts_json = serde_json::to_string(&body.contract_types)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+    let cleaned_speakers: Vec<BrochureSpeaker> = body
+        .speakers
+        .iter()
+        .map(|s| BrochureSpeaker {
+            full_name: s.full_name.trim().to_string(),
+            role: s.role.trim().to_string(),
+        })
+        .filter(|s| !s.full_name.is_empty() || !s.role.is_empty())
+        .take(8)
+        .collect();
+    let speakers_json = serde_json::to_string(&cleaned_speakers)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
     sqlx::query(
         r#"
         INSERT INTO company_brochures (
@@ -391,7 +418,7 @@ pub async fn update_exhibitor_brochure(
             logo_url, presentation, sought_profiles, recruitment_process, roles_offered,
             career_progression, abroad_positions, contract_types, other_contract_type,
             locations, contact_full_name, contact_email, contact_phone,
-            booth_size, pitch_zone, updated_at
+            booth_size, pitch_zone, speakers, updated_at
         )
         VALUES (
             ?1, ?2, ?3, ?4, ?5, ?6, ?7,
@@ -399,7 +426,7 @@ pub async fn update_exhibitor_brochure(
             ?14, ?15, ?16, ?17, ?18,
             ?19, ?20, ?21, ?22,
             ?23, ?24, ?25, ?26,
-            ?27, ?28, datetime('now')
+            ?27, ?28, ?29, datetime('now')
         )
         ON CONFLICT(company_id) DO UPDATE SET
             custom_company_name = excluded.custom_company_name,
@@ -429,6 +456,7 @@ pub async fn update_exhibitor_brochure(
             contact_phone = excluded.contact_phone,
             booth_size = excluded.booth_size,
             pitch_zone = excluded.pitch_zone,
+            speakers = excluded.speakers,
             updated_at = datetime('now')
         "#,
     )
@@ -460,6 +488,7 @@ pub async fn update_exhibitor_brochure(
     .bind(&body.contact_phone)
     .bind(&body.booth_size)
     .bind(body.pitch_zone)
+    .bind(&speakers_json)
     .execute(&state.db)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
