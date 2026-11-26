@@ -1,0 +1,202 @@
+name: Deploy Production (NovaTech CRM)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy_crm:
+        description: "Déployer frontend-crm (crm.genius-cs.fr)"
+        type: boolean
+        default: true
+      deploy_registration:
+        description: "Déployer frontend-registration (entreprise.genius-cs.fr)"
+        type: boolean
+        default: true
+      deploy_backend:
+        description: "Déployer backend Rust (crm-backend.service)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      crm: ${{ steps.filter.outputs.crm }}
+      registration: ${{ steps.filter.outputs.registration }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect modified bricks
+        id: filter
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            crm:
+              - 'frontend-crm/**'
+              - '.github/workflows/deploy.yml'
+            registration:
+              - 'frontend-registration/**'
+              - '.github/workflows/deploy.yml'
+            backend:
+              - 'backend/**'
+              - '.github/workflows/deploy.yml'
+
+      - name: Apply manual dispatch inputs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "crm=${{ inputs.deploy_crm }}" >> "$GITHUB_OUTPUT"
+          echo "registration=${{ inputs.deploy_registration }}" >> "$GITHUB_OUTPUT"
+          echo "backend=${{ inputs.deploy_backend }}" >> "$GITHUB_OUTPUT"
+        id: manual
+
+  deploy-frontend-crm:
+    needs: detect-changes
+    if: >
+      (github.event_name == 'push' && needs.detect-changes.outputs.crm == 'true') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy_crm == true)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build frontend-crm
+        working-directory: frontend-crm
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run build
+
+      - name: Configure SSH
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VM_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy frontend-crm to /var/www/crm-novatech
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$VM_USER@$VM_HOST" 'mkdir -p /tmp/deploy-crm-novatech'
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" \
+            frontend-crm/dist/ "$VM_USER@$VM_HOST:/tmp/deploy-crm-novatech/"
+          ssh -i ~/.ssh/deploy_key "$VM_USER@$VM_HOST" '
+            set -e
+            sudo rsync -a --delete /tmp/deploy-crm-novatech/ /var/www/crm-novatech/
+            sudo chown -R www-data:www-data /var/www/crm-novatech
+            rm -rf /tmp/deploy-crm-novatech
+          '
+
+  deploy-frontend-registration:
+    needs: detect-changes
+    if: >
+      (github.event_name == 'push' && needs.detect-changes.outputs.registration == 'true') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy_registration == true)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build frontend-registration
+        working-directory: frontend-registration
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run build
+
+      - name: Configure SSH
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VM_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy frontend-registration to /var/www/entreprise-novatech
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$VM_USER@$VM_HOST" 'mkdir -p /tmp/deploy-entreprise-novatech'
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" \
+            frontend-registration/dist/ "$VM_USER@$VM_HOST:/tmp/deploy-entreprise-novatech/"
+          ssh -i ~/.ssh/deploy_key "$VM_USER@$VM_HOST" '
+            set -e
+            sudo rsync -a --delete /tmp/deploy-entreprise-novatech/ /var/www/entreprise-novatech/
+            sudo chown -R www-data:www-data /var/www/entreprise-novatech
+            rm -rf /tmp/deploy-entreprise-novatech
+          '
+
+  deploy-backend:
+    needs: detect-changes
+    if: >
+      (github.event_name == 'push' && needs.detect-changes.outputs.backend == 'true') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy_backend == true)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      - name: Build Rust backend (release)
+        working-directory: backend
+        run: cargo build --release
+
+      - name: Configure SSH
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VM_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+
+      - name: Backup SQLite DB and deploy backend binary
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+        run: |
+          scp -i ~/.ssh/deploy_key backend/target/release/crm-genius "$VM_USER@$VM_HOST:/tmp/crm-genius.new"
+          ssh -i ~/.ssh/deploy_key "$VM_USER@$VM_HOST" '
+            set -e
+            mkdir -p /home/debian/crm-backups
+            TS=$(date +%Y%m%d_%H%M%S)
+            sqlite3 /opt/crm-novatech/backend/crm.db ".backup '\''/home/debian/crm-backups/crm.db.bak.${TS}'\''"
+            chmod +x /tmp/crm-genius.new
+            sudo systemctl stop crm-backend.service
+            mv /tmp/crm-genius.new /opt/crm-novatech/backend/target/release/crm-genius
+            sudo systemctl start crm-backend.service
+            sleep 2
+            if ! systemctl is-active --quiet crm-backend.service; then
+              echo "ERREUR: crm-backend.service n'\''a pas démarré"
+              sudo journalctl -u crm-backend.service -n 40 --no-pager
+              exit 1
+            fi
+            echo "crm-backend.service actif"
+          '
