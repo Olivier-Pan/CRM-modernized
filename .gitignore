@@ -96,3 +96,11 @@ target/
 node_modules/
 .env
 .DS_Store
+
+# SQLite
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
