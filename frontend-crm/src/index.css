@@ -1,14 +1,4 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { font-size: 14px; }
-
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  background: #ffffff;
-  color: #0a0a0a;
-}
-
-button { font-family: inherit; cursor: pointer; }
-input, select, textarea { font-family: inherit; }
-a { text-decoration: none; }
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/layout.css';
+@import './styles/ui.css';

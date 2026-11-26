@@ -1,22 +1,30 @@
 import { useState, useEffect } from 'react';
 
-type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light';
 
-// Initialisation depuis le localStorage pour mémoriser le choix de l'utilisateur
+function applyThemeToDocument(theme: Theme) {
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+}
+
 let currentTheme: Theme = (localStorage.getItem('crm-theme') as Theme) || 'dark';
+applyThemeToDocument(currentTheme);
+
 const listeners = new Set<(theme: Theme) => void>();
 
 export const toggleTheme = () => {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
   localStorage.setItem('crm-theme', currentTheme);
-  // Met à jour tous les composants qui utilisent ce hook instantanément
-  listeners.forEach(fn => fn(currentTheme));
+  applyThemeToDocument(currentTheme);
+  listeners.forEach((fn) => fn(currentTheme));
 };
 
-export const useTheme = () => {
+export const useTheme = (): Theme => {
   const [theme, setTheme] = useState<Theme>(currentTheme);
 
   useEffect(() => {
+    applyThemeToDocument(currentTheme);
     listeners.add(setTheme);
     return () => {
       listeners.delete(setTheme);

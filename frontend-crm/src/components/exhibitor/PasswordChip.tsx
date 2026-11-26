@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { copyText } from '../lib/clipboard';
+import { copyText } from '../../lib/clipboard';
 
 interface Props {
   password?: string;

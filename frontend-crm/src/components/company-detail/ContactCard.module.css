@@ -1,0 +1,230 @@
+.card {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.cardPrimary {
+  border-color: var(--accent-subtle-border);
+}
+
+.header {
+  padding: 14px 18px;
+  background: var(--bg-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.headerPrimary {
+  background: var(--accent-subtle-bg);
+}
+
+.headerBordered {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 230px;
+  flex: 1;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.avatarPrimary {
+  color: var(--accent-text);
+  border-color: var(--accent-subtle-border);
+}
+
+.identityBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--text-primary);
+}
+
+.primaryBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: var(--status-info-text);
+  background: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
+}
+
+.genericBadge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.channelsRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.emailGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.pill:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.pillCopied {
+  border-color: var(--status-success-border);
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+.pillLink {
+  color: var(--accent-text);
+}
+
+.smallIconBtn {
+  width: 26px;
+  height: 26px;
+  background: var(--bg-surface);
+}
+
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.assignGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assignSelfBtn {
+  color: var(--accent-text);
+  border-color: var(--accent-subtle-border);
+}
+
+.assignSelect {
+  width: auto;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ownerChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 6px 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.ownerChipMine {
+  border-color: var(--accent-subtle-border);
+  background: var(--accent-subtle-bg);
+  color: var(--accent-text);
+}
+
+.unassignBtn {
+  width: 22px;
+  height: 22px;
+  border-color: transparent;
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-subtle);
+}
+
+.iconGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.surfaceIconBtn {
+  background: var(--bg-surface);
+}
+
+.editPanel {
+  padding: 16px 18px;
+  background: var(--bg-subtle);
+}
+
+.editPanelBordered {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.editTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}

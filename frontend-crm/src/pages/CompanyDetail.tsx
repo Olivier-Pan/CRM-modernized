@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getCompany,
@@ -12,14 +12,13 @@ import { listFollowUps, deleteFollowUp, type FollowUp } from '../api/follow_ups'
 import { getMe } from '../api/auth';
 import { listMembers } from '../api/members';
 import { listEditions } from '../api/editions';
-import { useTheme } from '../hooks/useTheme';
-import { getCompanyDetailTheme } from '../components/company-detail/styles';
 import CompanyIdentityCard from '../components/company-detail/CompanyIdentityCard';
 import CompanyContactsSection from '../components/company-detail/CompanyContactsSection';
 import InternalRemarkCard from '../components/company-detail/InternalRemarkCard';
-import ExhibitorAccessCard from '../components/ExhibitorAccessCard';
-import { BrochureReadOnlyPanel } from '../components/BrochureReadOnlyPanel';
-import ConfirmModal from '../components/ConfirmModal';
+import ExhibitorAccessCard from '../components/exhibitor/ExhibitorAccessCard';
+import { BrochureReadOnlyPanel } from '../components/exhibitor/BrochureReadOnlyPanel';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import Spinner from '../components/ui/Spinner';
 import type {
   Company,
   Shark,
@@ -33,8 +32,6 @@ import type {
 export default function CompanyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const t = getCompanyDetailTheme(theme);
 
   // --- ÉTATS GLOBAUX ---
   const [company, setCompany] = useState<Company | null>(null);
@@ -151,112 +148,155 @@ export default function CompanyDetail() {
 
   if (loading) {
     return (
-      <div style={{ padding: 48, color: t.textMuted, display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>
-        <div style={{ width: 16, height: 16, border: '2px solid #8b5cf6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        Chargement de la fiche entreprise…
-        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+      <div className="crm-page" style={{ maxWidth: 1140 }}>
+        <div style={{ paddingTop: 20 }}>
+          <Spinner label="Chargement de la fiche entreprise…" />
+        </div>
       </div>
     );
   }
 
   if (error || !company) {
-    return <div style={{ padding: 40, color: '#ef4444' }}>Erreur : {error || 'Entreprise introuvable'}</div>;
+    return (
+      <div className="crm-page" style={{ maxWidth: 1140 }}>
+        <div
+          style={{
+            padding: '12px 16px',
+            borderRadius: 8,
+            background: 'var(--status-danger-bg)',
+            border: '1px solid var(--status-danger-border)',
+            color: 'var(--status-danger-text)',
+            fontSize: 13.5,
+          }}
+        >
+          <strong>Erreur :</strong> {error || 'Entreprise introuvable'}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: '36px 44px', color: t.textNormal, maxWidth: 1200, margin: '0 auto', background: t.bgMain, minHeight: '100vh', transition: 'background 0.3s' }}>
-      <button
-        onClick={() => navigate(-1)}
-        style={{ background: 'none', border: 'none', color: t.textMuted, cursor: 'pointer', fontSize: 12, marginBottom: 24, padding: 0, display: 'flex', alignItems: 'center', gap: 6, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700 }}
-      >
-        &larr; Retour
-      </button>
+    <div className="crm-page" style={{ maxWidth: 1140 }}>
+      {/* Conservé temporairement jusqu'à la migration complète des sous-composants (Étape 4.3B) */}
 
-      {/* 1. FICHE IDENTITÉ */}
-      <CompanyIdentityCard
-        company={company}
-        onCompanyUpdated={setCompany}
-        onStatusChange={handleGlobalStatusChange}
-        onDeleteClick={handleDeleteCompany}
-        externalEditTrigger={editInfoTrigger}
-      />
+      <div style={{ marginBottom: 14 }}>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="crm-btn crm-btn-ghost crm-btn-sm"
+          style={{ paddingLeft: 6, paddingRight: 10 }}
+        >
+          <span aria-hidden="true">&larr;</span>
+          <span>Entreprises</span>
+        </button>
+      </div>
 
-      {/* 2. CONTACTS & SUIVI */}
-      <CompanyContactsSection
-        companyId={company.id}
-        companyStatus={company.global_status}
-        contacts={contacts}
-        sharks={sharks}
-        followUps={followUps}
-        me={me}
-        members={members}
-        onContactCreated={(created) => setContacts((prev) => [...prev, created])}
-        onContactUpdated={(updated) => setContacts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))}
-        onContactsReplaced={setContacts}
-        onRequestDeleteContact={handleRequestDeleteContact}
-        onSharkAssigned={(shark) => setSharks((prev) => [...prev, shark])}
-        onRequestUnassignShark={handleRequestUnassignShark}
-        onFollowUpAdded={(fup) => setFollowUps((prev) => [...prev, fup])}
-        onFollowUpUpdated={(fup) => setFollowUps((prev) => prev.map((f) => (f.id === fup.id ? fup : f)))}
-        onFollowUpRemoved={(fupId) => setFollowUps((prev) => prev.filter((f) => f.id !== fupId))}
-        onRequestDeleteFollowUp={handleRequestDeleteFollowUp}
-        onStatusChange={handleGlobalStatusChange}
-      />
+      <div style={{ marginBottom: 22 }}>
+        <CompanyIdentityCard
+          company={company}
+          onCompanyUpdated={setCompany}
+          onStatusChange={handleGlobalStatusChange}
+          onDeleteClick={handleDeleteCompany}
+          externalEditTrigger={editInfoTrigger}
+        />
+      </div>
 
-      {/* 3. REMARQUE INTERNE */}
-      <InternalRemarkCard
-        company={company}
-        onCompanyUpdated={setCompany}
-      />
+        {/* 2. GRILLE ASYMÉTRIQUE (Flux principal à gauche / Contexte sticky à droite) */}
+        <div className="crm-detail-grid">
+          {/* Colonne principale : Contacts, Suivi & Brochure */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 }}>
+            <CompanyContactsSection
+              companyId={company.id}
+              companyStatus={company.global_status}
+              contacts={contacts}
+              sharks={sharks}
+              followUps={followUps}
+              me={me}
+              members={members}
+              onContactCreated={(created) => setContacts((prev) => [...prev, created])}
+              onContactUpdated={(updated) =>
+                setContacts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+              }
+              onContactsReplaced={setContacts}
+              onRequestDeleteContact={handleRequestDeleteContact}
+              onSharkAssigned={(shark) => setSharks((prev) => [...prev, shark])}
+              onRequestUnassignShark={handleRequestUnassignShark}
+              onFollowUpAdded={(fup) => setFollowUps((prev) => [...prev, fup])}
+              onFollowUpUpdated={(fup) =>
+                setFollowUps((prev) => prev.map((f) => (f.id === fup.id ? fup : f)))
+              }
+              onFollowUpRemoved={(fupId) =>
+                setFollowUps((prev) => prev.filter((f) => f.id !== fupId))
+              }
+              onRequestDeleteFollowUp={handleRequestDeleteFollowUp}
+              onStatusChange={handleGlobalStatusChange}
+            />
 
-      {/* 4. ACCÈS EXPOSANT & FORMULAIRE BROCHURE */}
-      {company.global_status === 'Signed' && (
-        <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <ExhibitorAccessCard
-            company={company}
-            contactEmail={
-              contacts.find((c) => c.is_primary && c.email)?.email ||
-              contacts.find((c) => c.email)?.email
-            }
-            editionName={editions.find((e) => e.id === company.edition_id)?.name}
-            senderName={me?.name}
-            senderEmail={me?.email}
-            onRegenerate={async () => {
-              const res = await regenerateCompanyPassword(company.id);
-              setCompany({ ...company, company_password: res.company_password });
-              return true;
+            {company.global_status === 'Signed' && (
+              <BrochureReadOnlyPanel companyId={company.id} />
+            )}
+          </div>
+
+          {/* Colonne latérale sticky : Remarque interne & Accès exposant */}
+          <aside
+            style={{
+              position: 'sticky',
+              top: 72,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 18,
             }}
-            onEditContact={() => {
-              setEditInfoTrigger((n) => n + 1);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
+          >
+            <InternalRemarkCard
+              company={company}
+              onCompanyUpdated={setCompany}
+            />
 
-          <BrochureReadOnlyPanel companyId={company.id} />
+            {company.global_status === 'Signed' && (
+              <ExhibitorAccessCard
+                company={company}
+                contactEmail={
+                  contacts.find((c) => c.is_primary && c.email)?.email ||
+                  contacts.find((c) => c.email)?.email
+                }
+                editionName={editions.find((e) => e.id === company.edition_id)?.name}
+                senderName={me?.name}
+                senderEmail={me?.email}
+                onRegenerate={async () => {
+                  const res = await regenerateCompanyPassword(company.id);
+                  setCompany({ ...company, company_password: res.company_password });
+                  return true;
+                }}
+                onEditContact={() => {
+                  setEditInfoTrigger((n) => n + 1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+          </aside>
         </div>
-      )}
 
-      {/* MODALE DE CONFIRMATION */}
-      <ConfirmModal
-        open={confirmDialog !== null}
-        title={confirmDialog?.title ?? ''}
-        message={confirmDialog?.message ?? ''}
-        confirmLabel={confirmDialog?.confirmLabel}
-        loading={confirmLoading}
-        onCancel={() => setConfirmDialog(null)}
-        onConfirm={async () => {
-          if (!confirmDialog) return;
-          setConfirmLoading(true);
-          try {
-            await confirmDialog.onConfirm();
-            setConfirmDialog(null);
-          } catch (err) {
-            alert(err instanceof Error ? err.message : 'Erreur');
-          } finally {
-            setConfirmLoading(false);
-          }
-        }}
-      />
-    </div>
+        {/* MODALE DE CONFIRMATION */}
+        <ConfirmModal
+          open={confirmDialog !== null}
+          title={confirmDialog?.title ?? ''}
+          message={confirmDialog?.message ?? ''}
+          confirmLabel={confirmDialog?.confirmLabel}
+          loading={confirmLoading}
+          onCancel={() => setConfirmDialog(null)}
+          onConfirm={async () => {
+            if (!confirmDialog) return;
+            setConfirmLoading(true);
+            try {
+              await confirmDialog.onConfirm();
+              setConfirmDialog(null);
+            } catch (err) {
+              alert(err instanceof Error ? err.message : 'Erreur');
+            } finally {
+              setConfirmLoading(false);
+            }
+          }}
+        />
+      </div>
   );
 }

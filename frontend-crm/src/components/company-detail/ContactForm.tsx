@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import { useTheme } from '../../hooks/useTheme';
 import type { ContactType } from '../../types';
-import {
-  getCompanyDetailTheme,
-  labelStyle,
-  inputStyle,
-  btnPrimaryStyle,
-  btnSecondaryStyle,
-} from './styles';
+import styles from './ContactForm.module.css';
 
 export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
   person: 'Personne physique',
@@ -45,9 +38,6 @@ export default function ContactForm({
   onSubmit,
   onCancel,
 }: ContactFormProps) {
-  const theme = useTheme();
-  const t = getCompanyDetailTheme(theme);
-
   const [form, setForm] = useState<ContactFormValues>({
     contact_type: initialValues?.contact_type ?? 'person',
     first_name: initialValues?.first_name ?? '',
@@ -64,37 +54,39 @@ export default function ContactForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14 }}>
-        <label style={labelStyle(t.textMuted)}>
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.grid}>
+        <label className={styles.label}>
           Type de canal *
           <select
-            style={inputStyle(t)}
+            className="crm-select"
             value={form.contact_type}
             onChange={(e) => setForm({ ...form, contact_type: e.target.value as ContactType })}
           >
             {Object.entries(CONTACT_TYPE_LABELS).map(([val, label]) => (
-              <option key={val} value={val}>{label}</option>
+              <option key={val} value={val}>
+                {label}
+              </option>
             ))}
           </select>
         </label>
 
         {form.contact_type === 'person' && (
           <>
-            <label style={labelStyle(t.textMuted)}>
+            <label className={styles.label}>
               Prénom
               <input
-                style={inputStyle(t)}
-                placeholder="Ex: Camille"
+                className="crm-input"
+                placeholder="Ex. Camille"
                 value={form.first_name}
                 onChange={(e) => setForm({ ...form, first_name: e.target.value })}
               />
             </label>
-            <label style={labelStyle(t.textMuted)}>
+            <label className={styles.label}>
               Nom
               <input
-                style={inputStyle(t)}
-                placeholder="Ex: Laurent"
+                className="crm-input"
+                placeholder="Ex. Laurent"
                 value={form.last_name}
                 onChange={(e) => setForm({ ...form, last_name: e.target.value })}
               />
@@ -102,33 +94,33 @@ export default function ContactForm({
           </>
         )}
 
-        <label style={labelStyle(t.textMuted)}>
+        <label className={styles.label}>
           Email
           <input
             type="email"
-            style={inputStyle(t)}
+            className="crm-input"
             placeholder="camille@entreprise.com"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </label>
 
-        <label style={labelStyle(t.textMuted)}>
+        <label className={styles.label}>
           Téléphone
           <input
             type="tel"
-            style={inputStyle(t)}
+            className="crm-input"
             placeholder="+33 6 12 34 56 78"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
         </label>
 
-        <label style={labelStyle(t.textMuted)}>
+        <label className={styles.label}>
           Lien LinkedIn
           <input
             type="url"
-            style={inputStyle(t)}
+            className="crm-input"
             placeholder="https://linkedin.com/in/..."
             value={form.linkedin_url}
             onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })}
@@ -136,29 +128,29 @@ export default function ContactForm({
         </label>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: showPrimaryToggle || isFirstContact ? 'space-between' : 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginTop: 4 }}>
+      <div className={`${styles.footer} ${showPrimaryToggle || isFirstContact ? styles.footerSplit : ''}`}>
         {showPrimaryToggle && (
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: t.textNormal, cursor: 'pointer' }}>
+          <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
               checked={form.is_primary}
               onChange={(e) => setForm({ ...form, is_primary: e.target.checked })}
             />
-            Définir comme contact principal
+            <span>Définir comme contact principal</span>
           </label>
         )}
 
         {!showPrimaryToggle && isFirstContact && (
-          <span style={{ fontSize: 12, color: t.textSubMuted }}>
+          <span className={styles.hint}>
             Ce premier contact sera automatiquement défini comme principal.
           </span>
         )}
 
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button type="button" onClick={onCancel} style={btnSecondaryStyle(t)}>
+        <div className={styles.actions}>
+          <button type="button" onClick={onCancel} className="crm-btn crm-btn-ghost crm-btn-sm">
             Annuler
           </button>
-          <button type="submit" disabled={saving} style={btnPrimaryStyle}>
+          <button type="submit" disabled={saving} className="crm-btn crm-btn-primary crm-btn-sm">
             {saving ? 'Enregistrement…' : submitLabel}
           </button>
         </div>

@@ -25,7 +25,11 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 
-
+#SQL/DB
+*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 
 
 
@@ -92,3 +96,12 @@ target/
 node_modules/
 .env
 .DS_Store
+
+# SQLite
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+companies_code.csv
