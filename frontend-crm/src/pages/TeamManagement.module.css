@@ -55,9 +55,9 @@
   pointer-events: none;
 }
 
-.searchInput {
+.searchWrap .searchInput {
   height: 32px;
-  padding-left: 32px;
+  padding: 0 11px 0 32px;
   font-size: 13px;
 }
 

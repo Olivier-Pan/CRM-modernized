@@ -53,8 +53,8 @@ export default function Layout({ children, userName, userId, isAdmin }: LayoutPr
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
             <Link to="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
               <img
-                src="/genius-logo.png"
-                alt="Genius CentraleSupélec"
+                src="/logo-novatech.png"
+                alt="NovaTech CentraleSupélec"
                 style={{ height: 28, width: 'auto', display: 'block', filter: 'var(--logo-filter)' }}
               />
             </Link>

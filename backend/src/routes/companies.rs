@@ -7,6 +7,7 @@ use serde::Deserialize;
 use sqlx::QueryBuilder;
 use std::sync::Arc;
 use uuid::Uuid;
+use rand::Rng;
 
 use crate::{models::Company, state::AppState};
 
@@ -323,12 +324,26 @@ pub async fn update_internal_remark(
     Ok(Json(updated_company))
 }
 
+const COMPANY_CODE_CHARSET: &[u8] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const COMPANY_CODE_LEN: usize = 12;
+
+fn generate_company_password() -> String {
+    let mut rng = rand::thread_rng(); // si tu es en rand 0.9+, remplace par rand::rng()
+    (0..COMPANY_CODE_LEN)
+        .map(|_| {
+            let idx = rng.gen_range(0..COMPANY_CODE_CHARSET.len()); // en rand 0.9+ : rng.random_range(..)
+            COMPANY_CODE_CHARSET[idx] as char
+        })
+        .collect()
+}
+
 /// POST /api/companies/:id/regenerate-password
 pub async fn regenerate_password(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<Json<Company>, (StatusCode, String)> {
-    let new_password = format!("{:06}", rand::random::<u32>() % 1000000);
+    let new_password = generate_company_password();
 
     sqlx::query("UPDATE companies SET company_password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(&new_password)
